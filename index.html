@@ -52,7 +52,8 @@
 
   <script>
     const params = new URLSearchParams(window.location.search);
-    const playerCount = parseInt(params.get("count")) || 10;
+    const countParam = params.get("count");
+    const playerCount = (!isNaN(parseInt(countParam)) && parseInt(countParam) >= 1) ? parseInt(countParam) : 10;
     const nightCount = 7;
 
     const headerRow = document.getElementById("headerRow");
@@ -95,7 +96,7 @@
       roleCell.appendChild(select);
       row.appendChild(roleCell);
 
-      // Ячейки для ночей
+      // Ячейки ночей
       for (let night = 1; night <= nightCount; night++) {
         const cell = document.createElement("td");
         cell.className = "cell";
@@ -108,7 +109,7 @@
       tableBody.appendChild(row);
     }
 
-    // Клик по ячейке
+    // Обработка клика
     document.addEventListener("click", (e) => {
       if (e.target.classList.contains("cell")) {
         const cell = e.target;
@@ -124,14 +125,14 @@
           return;
         }
 
-        // Проверка на допустимое значение
-        if (!/^[ХМВЛПК]$/i.test(input)) return;
+        // Проверка допустимого символа
+        if (!/^[ХМВЛПК]$/.test(input)) return;
 
         const previous = cell.textContent;
         const updated = previous ? previous + "\\" + input : input;
         cell.textContent = updated;
 
-        // Обновление цвета по приоритету
+        // Сброс цвета
         cell.className = "cell";
         const color = getStrongestColor(updated);
         if (color) cell.classList.add(color);
