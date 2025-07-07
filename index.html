@@ -2,30 +2,26 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Мафия — Таблица ночей</title>
+  <title>Мафия — Таблица</title>
   <style>
-    body {
-      font-family: sans-serif;
-      margin: 0;
-      padding: 10px;
-    }
-    table {
-      border-collapse: collapse;
-      width: 100%;
-    }
+    body { font-family: sans-serif; margin: 0; padding: 10px; }
+    table { border-collapse: collapse; width: 100%; }
     td, th {
       border: 1px solid #ccc;
       text-align: center;
       padding: 5px;
       min-width: 40px;
     }
-    .cell {
-      cursor: pointer;
-    }
+    .cell { cursor: pointer; }
     .red { background-color: #f88; }
     .green { background-color: #8f8; }
     .purple { background-color: #d8b6ff; }
     .pink { background-color: #ffc0cb; }
+    select {
+      font-size: 14px;
+      padding: 2px;
+      width: 100%;
+    }
   </style>
 </head>
 <body>
@@ -35,16 +31,15 @@
       <tr id="headerRow">
         <th>#</th>
         <th>Роль</th>
-        <!-- Ночи будут добавлены здесь -->
+        <!-- Ночи -->
       </tr>
     </thead>
     <tbody id="tableBody">
-      <!-- Строки игроков вставятся сюда -->
+      <!-- Строки -->
     </tbody>
   </table>
 
   <script>
-    // Получаем count из URL
     const params = new URLSearchParams(window.location.search);
     const playerCount = parseInt(params.get("count")) || 10;
     const nightCount = 7;
@@ -58,23 +53,38 @@
 
     const tableBody = document.getElementById("tableBody");
 
+    const getStrongestColor = (text) => {
+      text = text.toUpperCase();
+      if (text.includes("Л")) return "purple";
+      if (text.includes("В")) return "green";
+      if (text.includes("Х") || text.includes("М")) return "red";
+      if (text.includes("П")) return "pink";
+      return "";
+    };
+
+    const roleOptions = ["", "Х", "Хд", "Л", "В", "Ш", "М", "К", "С", "П"];
+
     for (let i = 1; i <= playerCount; i++) {
       const row = document.createElement("tr");
 
-      // Номер игрока
+      // Номер
       const numCell = document.createElement("td");
       numCell.textContent = i;
       row.appendChild(numCell);
 
-      // Роль игрока
+      // Роль (выпадающий список)
       const roleCell = document.createElement("td");
-      roleCell.className = "cell";
-      roleCell.dataset.row = i;
-      roleCell.dataset.col = "role";
-      roleCell.textContent = "";
+      const select = document.createElement("select");
+      roleOptions.forEach(opt => {
+        const o = document.createElement("option");
+        o.value = opt;
+        o.textContent = opt;
+        select.appendChild(o);
+      });
+      roleCell.appendChild(select);
       row.appendChild(roleCell);
 
-      // Ночные действия
+      // Ночи
       for (let night = 1; night <= nightCount; night++) {
         const cell = document.createElement("td");
         cell.className = "cell";
@@ -87,28 +97,23 @@
       tableBody.appendChild(row);
     }
 
-    // Обработка кликов по ячейкам
+    // Ввод действий
     document.addEventListener("click", (e) => {
       if (e.target.classList.contains("cell")) {
         const cell = e.target;
-        const input = prompt("Введите действие: Х (мафия), М (маньяк), В (доктор), Л (любовница), П (путана), К (камикадзе)");
-        const colors = {
-          "Х": "red",
-          "М": "red",
-          "В": "green",
-          "Л": "purple",
-          "П": "pink",
-          "К": ""
-        };
+        const input = prompt("Введите действие: Х, М, В, Л, П, К").toUpperCase();
+        if (!input.match(/^[ХМВЛПК]/i)) return;
 
-        if (input in colors) {
-          cell.textContent = input;
-          cell.className = "cell";
-          if (colors[input]) cell.classList.add(colors[input]);
-        }
+        const previous = cell.textContent;
+        const updated = previous ? previous + "\\" + input : input;
+        cell.textContent = updated;
+
+        // Сброс цвета
+        cell.className = "cell";
+        const color = getStrongestColor(updated);
+        if (color) cell.classList.add(color);
       }
     });
   </script>
 </body>
 </html>
-
