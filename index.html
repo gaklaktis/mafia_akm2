@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Мафия — Таблица</title>
+  <title>Мафия — Таблица ночей</title>
   <style>
     body {
       font-family: sans-serif;
@@ -29,82 +29,86 @@
   </style>
 </head>
 <body>
-  <h3>Ночная таблица</h3>
+  <h3>Таблица ночных действий</h3>
   <table id="mafiaTable">
     <thead>
-      <tr>
+      <tr id="headerRow">
         <th>#</th>
         <th>Роль</th>
-        <th>Ночь 1</th>
-        <th>Ночь 2</th>
-        <th>Ночь 3</th>
-        <th>Ночь 4</th>
-        <th>Ночь 5</th>
-        <th>Ночь 6</th>
-        <th>Ночь 7</th>
+        <!-- Ночи будут добавлены здесь -->
       </tr>
     </thead>
     <tbody id="tableBody">
-      <!-- Строки вставятся через JavaScript -->
+      <!-- Строки игроков вставятся сюда -->
     </tbody>
   </table>
 
   <script>
-    const players = 10; // Измени на нужное число игроков
+    // Получаем count из URL
+    const params = new URLSearchParams(window.location.search);
+    const playerCount = parseInt(params.get("count")) || 10;
+    const nightCount = 7;
 
-    const actions = {
-      '': '',
-      'Х': 'red',     // Выстрел мафии
-      'М': 'red',     // Маньяк
-      'В': 'green',   // Доктор
-      'Л': 'purple',  // Любовница
-      'П': 'pink',    // Путана
-      'К': ''         // Камикадзе
-    };
+    const headerRow = document.getElementById("headerRow");
+    for (let n = 1; n <= nightCount; n++) {
+      const th = document.createElement("th");
+      th.textContent = `Ночь ${n}`;
+      headerRow.appendChild(th);
+    }
 
-    const tableBody = document.getElementById('tableBody');
+    const tableBody = document.getElementById("tableBody");
 
-    for (let i = 1; i <= players; i++) {
-      const row = document.createElement('tr');
+    for (let i = 1; i <= playerCount; i++) {
+      const row = document.createElement("tr");
 
       // Номер игрока
-      const num = document.createElement('td');
-      num.textContent = i;
-      row.appendChild(num);
+      const numCell = document.createElement("td");
+      numCell.textContent = i;
+      row.appendChild(numCell);
 
-      // Роль
-      const role = document.createElement('td');
-      role.className = 'cell';
-      role.dataset.row = i;
-      role.dataset.col = 'role';
-      role.textContent = '';
-      row.appendChild(role);
+      // Роль игрока
+      const roleCell = document.createElement("td");
+      roleCell.className = "cell";
+      roleCell.dataset.row = i;
+      roleCell.dataset.col = "role";
+      roleCell.textContent = "";
+      row.appendChild(roleCell);
 
-      // Ночи
-      for (let night = 1; night <= 3; night++) {
-        const cell = document.createElement('td');
-        cell.className = 'cell';
+      // Ночные действия
+      for (let night = 1; night <= nightCount; night++) {
+        const cell = document.createElement("td");
+        cell.className = "cell";
         cell.dataset.row = i;
-        cell.dataset.col = 'night' + night;
-        cell.textContent = '';
+        cell.dataset.col = `night${night}`;
+        cell.textContent = "";
         row.appendChild(cell);
       }
 
       tableBody.appendChild(row);
     }
 
-    // Обработка нажатий
-    document.addEventListener('click', (e) => {
-      if (e.target.classList.contains('cell')) {
+    // Обработка кликов по ячейкам
+    document.addEventListener("click", (e) => {
+      if (e.target.classList.contains("cell")) {
         const cell = e.target;
-        const choice = prompt(\"Выберите действие: Х (мафия), М (маньяк), В (доктор), Л (любовница), П (путана), К (камикадзе)\");
-        if (choice in actions) {
-          cell.textContent = choice;
-          cell.className = 'cell'; // Сброс цвета
-          if (actions[choice]) cell.classList.add(actions[choice]);
+        const input = prompt("Введите действие: Х (мафия), М (маньяк), В (доктор), Л (любовница), П (путана), К (камикадзе)");
+        const colors = {
+          "Х": "red",
+          "М": "red",
+          "В": "green",
+          "Л": "purple",
+          "П": "pink",
+          "К": ""
+        };
+
+        if (input in colors) {
+          cell.textContent = input;
+          cell.className = "cell";
+          if (colors[input]) cell.classList.add(colors[input]);
         }
       }
     });
   </script>
 </body>
 </html>
+
