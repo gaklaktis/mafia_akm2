@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Мафия — Таблица</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 10px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    td, th {
+      border: 1px solid #ccc;
+      text-align: center;
+      padding: 5px;
+      min-width: 40px;
+    }
+    .cell {
+      cursor: pointer;
+    }
+    .red { background-color: #f88; }
+    .green { background-color: #8f8; }
+    .purple { background-color: #d8b6ff; }
+    .pink { background-color: #ffc0cb; }
+  </style>
+</head>
+<body>
+  <h3>Ночная таблица</h3>
+  <table id="mafiaTable">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Роль</th>
+        <th>Ночь 1</th>
+        <th>Ночь 2</th>
+        <th>Ночь 3</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody">
+      <!-- Строки вставятся через JavaScript -->
+    </tbody>
+  </table>
+
+  <script>
+    const players = 10; // Измени на нужное число игроков
+
+    const actions = {
+      '': '',
+      'Х': 'red',     // Выстрел мафии
+      'М': 'red',     // Маньяк
+      'В': 'green',   // Доктор
+      'Л': 'purple',  // Любовница
+      'П': 'pink',    // Путана
+      'К': ''         // Камикадзе
+    };
+
+    const tableBody = document.getElementById('tableBody');
+
+    for (let i = 1; i <= players; i++) {
+      const row = document.createElement('tr');
+
+      // Номер игрока
+      const num = document.createElement('td');
+      num.textContent = i;
+      row.appendChild(num);
+
+      // Роль
+      const role = document.createElement('td');
+      role.className = 'cell';
+      role.dataset.row = i;
+      role.dataset.col = 'role';
+      role.textContent = '';
+      row.appendChild(role);
+
+      // Ночи
+      for (let night = 1; night <= 3; night++) {
+        const cell = document.createElement('td');
+        cell.className = 'cell';
+        cell.dataset.row = i;
+        cell.dataset.col = 'night' + night;
+        cell.textContent = '';
+        row.appendChild(cell);
+      }
+
+      tableBody.appendChild(row);
+    }
+
+    // Обработка нажатий
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('cell')) {
+        const cell = e.target;
+        const choice = prompt(\"Выберите действие: Х (мафия), М (маньяк), В (доктор), Л (любовница), П (путана), К (камикадзе)\");
+        if (choice in actions) {
+          cell.textContent = choice;
+          cell.className = 'cell'; // Сброс цвета
+          if (actions[choice]) cell.classList.add(actions[choice]);
+        }
+      }
+    });
+  </script>
+</body>
+</html>
