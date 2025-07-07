@@ -22,10 +22,21 @@
       padding: 2px;
       width: 100%;
     }
+    .legend {
+      background: #f0f0f0;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+    }
   </style>
 </head>
 <body>
   <h3>Таблица ночных действий</h3>
+  <div class="legend">
+    <strong>Подсказка по ролям:</strong><br>
+    Х — мафия, Хд — дон, Л — любовница, В — доктор, Ш — шериф, М — маньяк, К — камикадзе, С — мститель, П — путана
+  </div>
+
   <table id="mafiaTable">
     <thead>
       <tr id="headerRow">
@@ -67,12 +78,12 @@
     for (let i = 1; i <= playerCount; i++) {
       const row = document.createElement("tr");
 
-      // Номер
+      // Номер игрока
       const numCell = document.createElement("td");
       numCell.textContent = i;
       row.appendChild(numCell);
 
-      // Роль (выпадающий список)
+      // Выбор роли
       const roleCell = document.createElement("td");
       const select = document.createElement("select");
       roleOptions.forEach(opt => {
@@ -84,7 +95,7 @@
       roleCell.appendChild(select);
       row.appendChild(roleCell);
 
-      // Ночи
+      // Ячейки для ночей
       for (let night = 1; night <= nightCount; night++) {
         const cell = document.createElement("td");
         cell.className = "cell";
@@ -97,18 +108,30 @@
       tableBody.appendChild(row);
     }
 
-    // Ввод действий
+    // Клик по ячейке
     document.addEventListener("click", (e) => {
       if (e.target.classList.contains("cell")) {
         const cell = e.target;
-        const input = prompt("Введите действие: Х, М, В, Л, П, К").toUpperCase();
-        if (!input.match(/^[ХМВЛПК]/i)) return;
+        let input = prompt("Введите действие: Х, М, В, Л, П, К. Чтобы удалить — введите 0");
+        if (input === null) return;
+
+        input = input.toUpperCase().trim();
+
+        // Удаление действий
+        if (input === "0") {
+          cell.textContent = "";
+          cell.className = "cell";
+          return;
+        }
+
+        // Проверка на допустимое значение
+        if (!/^[ХМВЛПК]$/i.test(input)) return;
 
         const previous = cell.textContent;
         const updated = previous ? previous + "\\" + input : input;
         cell.textContent = updated;
 
-        // Сброс цвета
+        // Обновление цвета по приоритету
         cell.className = "cell";
         const color = getStrongestColor(updated);
         if (color) cell.classList.add(color);
