@@ -18,7 +18,7 @@
     .purple { background-color: #d8b6ff; }
     .pink { background-color: #ffc0cb; }
     select {
-      font-size: 14px;
+      font-size: 12px;
       padding: 2px;
       width: 100%;
     }
@@ -54,7 +54,7 @@
     const params = new URLSearchParams(window.location.search);
     const countParam = params.get("count");
     const playerCount = (!isNaN(parseInt(countParam)) && parseInt(countParam) >= 1) ? parseInt(countParam) : 10;
-    const nightCount = 7;
+    const nightCount = 8;
 
     const headerRow = document.getElementById("headerRow");
     for (let n = 1; n <= nightCount; n++) {
