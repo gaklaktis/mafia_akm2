@@ -40,7 +40,7 @@
 </head>
 <body>
 
-<h3>Таблица ночных действий \  \ @Altimak </h3>
+<h3>Таблица ночных действий</h3>
 <div style="background: #f0f0f0; padding: 10px; margin-bottom: 10px;">
   <b>Подсказка по ролям:</b><br>
   П — путана, Л — любовница, Х — мафия, Хд — дон, В — доктор, Ш — шериф, М — маньяк, К — камикадзе, С — мститель
@@ -87,6 +87,7 @@
     const hasM = has("М");
     const hasXXX = has("ХХХ");
 
+    // приоритеты
     if (hasXXX) return "red";
     if (hasP && hasL) return "gradient-pink-purple";
     if (hasP && hasV) return "gradient-pink-green";
@@ -95,7 +96,6 @@
     if (hasV) return "green";
     if (hasX || hasM) return "red";
     if (hasP) return "pink";
-
     return "";
   }
 
