@@ -61,7 +61,7 @@
     const params = new URLSearchParams(window.location.search);
     const countParam = params.get("count");
     const playerCount = (!isNaN(parseInt(countParam)) && parseInt(countParam) >= 1) ? parseInt(countParam) : 10;
-    const nightCount = 7;
+    const nightCount = 9;
 
     const headerRow = document.getElementById("headerRow");
     for (let n = 1; n <= nightCount; n++) {
