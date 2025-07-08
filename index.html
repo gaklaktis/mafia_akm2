@@ -30,9 +30,9 @@
       border-radius: 8px;
     }
     #selectedPlayer {
-      font-size: 280px;
+      font-size: 380px;
       text-align: center;
-      margin-top: 30px;
+      margin-top: 80px;
       font-weight: bold;
       color: #444;
     }
@@ -42,7 +42,7 @@
   <h3>Таблица ночных действий</h3>
   <div class="legend">
     <strong>Подсказка по ролям:</strong><br>
-    П — путана, Л — любовница, Х — мафия, Хд — дон,  В — доктор, Ш — шериф, М — маньяк, К — камикадзе, С — мститель, 
+    П — путана, Л — любовница, Х — мафия, Хд — дон, В — доктор, Ш — шериф, М — маньяк, К — камикадзе, С — мститель
   </div>
 
   <table id="mafiaTable">
@@ -71,7 +71,7 @@
     }
 
     const tableBody = document.getElementById("tableBody");
-    const roleOptions = ["", "Х", "Хд", "Л", "В", "Ш", "М", "К", "С", "П"];
+    const roleOptions = ["", "П", "Л", "Х", "Хд", "В", "Ш", "М", "К", "С"];
 
     const getStrongestColor = (text) => {
       text = text.toUpperCase();
@@ -82,11 +82,20 @@
       return "";
     };
 
-    const updateNumberCellColor = (row, rowIndex) => {
+    const updateNumberCellColor = (row) => {
       const nightCells = Array.from(row.querySelectorAll(".cell"));
       const numCell = row.querySelector(".number-cell");
-      const text = nightCells.map(cell => cell.textContent.toUpperCase()).join("");
-      if (text.includes("Х") || text.includes("М")) {
+      let finalColor = "";
+
+      for (let cell of nightCells) {
+        const text = cell.textContent.toUpperCase();
+        const color = getStrongestColor(text);
+        if (color === "purple") finalColor = "none";
+        else if (color === "green" && finalColor !== "purple") finalColor = "none";
+        else if (color === "red" && finalColor === "") finalColor = "red";
+      }
+
+      if (finalColor === "red") {
         numCell.classList.add("num-red");
       } else {
         numCell.classList.remove("num-red");
@@ -101,8 +110,7 @@
       numCell.className = "number-cell";
       numCell.style.cursor = "pointer";
       numCell.addEventListener("click", () => {
-        const display = document.getElementById("selectedPlayer");
-        display.textContent = i;
+        document.getElementById("selectedPlayer").textContent = i;
       });
       row.appendChild(numCell);
 
@@ -132,18 +140,16 @@
     document.addEventListener("click", (e) => {
       if (e.target.classList.contains("cell")) {
         const cell = e.target;
-        let input = prompt("Введите действие: Х, М, В, Л, П, К. Удалить все — 0, удалить последнее — 00");
+        let input = prompt("Введите действие: Х, М, В, Л, П, К, Ш. Удалить все — 0, удалить последнее — 00");
         if (input === null) return;
 
         input = input.toUpperCase().trim();
-
         const row = cell.parentElement;
-        const rowIndex = parseInt(cell.dataset.row);
 
         if (input === "0") {
           cell.textContent = "";
           cell.className = "cell";
-          updateNumberCellColor(row, rowIndex);
+          updateNumberCellColor(row);
           return;
         }
 
@@ -159,11 +165,11 @@
           cell.className = "cell";
           const color = getStrongestColor(cell.textContent);
           if (color) cell.classList.add(color);
-          updateNumberCellColor(row, rowIndex);
+          updateNumberCellColor(row);
           return;
         }
 
-        if (!/^[ХМВЛПК]$/.test(input)) return;
+        if (!/^[ХМВЛПКШ]$/.test(input)) return;
 
         const previous = cell.textContent;
         const updated = previous ? previous + "\\" + input : input;
@@ -173,10 +179,11 @@
         const color = getStrongestColor(updated);
         if (color) cell.classList.add(color);
 
-        updateNumberCellColor(row, rowIndex);
+        updateNumberCellColor(row);
       }
     });
   </script>
 </body>
 </html>
+
 
