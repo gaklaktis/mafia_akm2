@@ -127,11 +127,10 @@
         numCell.classList.add("num-red");
 
         const style = getCellClass(val);
+        resetColorClasses(cells[i]);
         if (style.startsWith("gradient-pink-")) {
-          resetColorClasses(cells[i]);
           cells[i].classList.add(style);
         } else {
-          resetColorClasses(cells[i]);
           cells[i].classList.add("red");
         }
         return;
@@ -202,7 +201,7 @@
     }
   });
 
-  function exportData() {
+  async function exportData() {
     const data = { count: playerCount, rows: [] };
     tableBody.querySelectorAll("tr").forEach(row => {
       const tds = row.querySelectorAll("td");
@@ -211,16 +210,33 @@
       data.rows.push({ role, nights });
     });
 
-    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-    const link = document.createElement("a");
-    const now = new Date();
-    const date = now.toISOString().split("T")[0];
-    const time = `${now.getHours()}-${now.getMinutes()}`;
-    link.href = URL.createObjectURL(blob);
-    link.download = `mafia_akm_${date}_${time}.json`;
-    link.click();
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
 
-    localStorage.setItem("mafia_table", JSON.stringify(data));
+    if (window.showSaveFilePicker) {
+      try {
+        const now = new Date();
+        const date = now.toISOString().split("T")[0];
+        const time = `${now.getHours()}-${now.getMinutes()}`;
+        const fileHandle = await window.showSaveFilePicker({
+          suggestedName: `mafia_akm_${date}_${time}.json`,
+          types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }]
+        });
+        const writable = await fileHandle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        alert("Файл сохранён успешно ✅");
+        return;
+      } catch (err) {
+        alert("Не удалось сохранить: " + err.message);
+        console.warn(err);
+      }
+    }
+
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `mafia_akm.json`;
+    link.click();
   }
 
   function importData(e) {
