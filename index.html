@@ -34,13 +34,13 @@
       border-radius: 8px;
     }
     #selectedPlayer {
-      font-size: 480px;
+      font-size: 390px;
       text-align: center;
       margin-top: 100px;
       font-weight: bold;
       color: red;
       padding-top: 400px;
-      padding-bottom: 400px;
+      padding-bottom: 600px;
     }
   </style>
 </head>
@@ -83,11 +83,9 @@
       const t = text.toUpperCase();
 
       if (t.includes("ХХХ")) return "red";
-
       if (t.includes("П") && t.includes("Л")) return "gradient-pink-purple";
-      if (t.includes("П") && (t.includes("Х") || t.includes("М"))) return "gradient-pink-red";
       if (t.includes("П") && t.includes("В")) return "gradient-pink-green";
-
+      if (t.includes("П") && (t.includes("Х") || t.includes("М"))) return "gradient-pink-red";
       if (t.includes("Л")) return "purple";
       if (t.includes("В")) return "green";
       if (t.includes("Х") || t.includes("М")) return "red";
@@ -99,16 +97,16 @@
     function updateRowHighlight(row) {
       const cells = row.querySelectorAll(".cell");
       let redFound = false;
+      let cancelFound = false;
 
       cells.forEach(cell => {
         const text = cell.textContent.toUpperCase();
         const className = getCellClass(text);
-        if (className === "red" || className === "gradient-pink-red" || text.includes("ХХХ")) {
-          redFound = true;
-        }
+        if (className === "green" || className === "purple" || className === "gradient-pink-green") cancelFound = true;
+        if (className === "red" || className === "gradient-pink-red" || text.includes("ХХХ")) redFound = true;
       });
 
-      if (redFound) {
+      if (redFound && !cancelFound) {
         row.classList.add("full-red-row");
       } else {
         row.classList.remove("full-red-row");
@@ -125,12 +123,8 @@
       for (const cell of nightCells) {
         const text = cell.textContent.toUpperCase();
         const className = getCellClass(text);
-        if (className === "purple" || className === "green" || className.startsWith("gradient-pink-")) {
-          hasCancel = true;
-        }
-        if (className === "red" || text.includes("ХХХ")) {
-          hasRed = true;
-        }
+        if (className === "green" || className === "purple" || className === "gradient-pink-green") hasCancel = true;
+        if (className === "red" || className === "gradient-pink-red" || text.includes("ХХХ")) hasRed = true;
       }
 
       if (hasRed && !hasCancel) {
@@ -224,14 +218,13 @@
       }
     });
 
-    // Защита от черного экрана
-document.addEventListener("visibilitychange", () => {
-  if (!document.hidden) {
-    document.body.style.backgroundColor = "white";
-    document.documentElement.style.backgroundColor = "white";
-    // Больше ничего не делаем, просто восстанавливаем фон
-  }
-});
+    // Не перезагружать при возврате на страницу
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) {
+        document.body.style.backgroundColor = "white";
+        document.documentElement.style.backgroundColor = "white";
+      }
+    });
   </script>
 </body>
 </html>
