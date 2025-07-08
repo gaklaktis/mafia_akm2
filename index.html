@@ -24,9 +24,7 @@
       color: red;
       padding-bottom: 600px;
     }
-    #loadFile {
-      display: none;
-    }
+    #loadFile { display: none; }
     label[for="loadFile"] {
       background-color: #eee;
       border: 1px solid #ccc;
@@ -37,9 +35,7 @@
       border-radius: 4px;
       font-size: 14px;
     }
-    label[for="loadFile"]:hover {
-      background-color: #ddd;
-    }
+    label[for="loadFile"]:hover { background-color: #ddd; }
   </style>
 </head>
 <body>
@@ -80,28 +76,21 @@
 
   const roleOptions = ["", "П", "Л", "Х", "Хд", "В", "Ш", "М", "К", "С"];
 
-  // 🔧 Обновлённая функция окрашивания по приоритету
   function getCellClass(text) {
     const parts = text.toUpperCase().split("\\").map(p => p.trim());
+    const has = r => parts.includes(r);
 
-    const hasP = parts.includes("П");
-    const hasL = parts.includes("Л");
-    const hasV = parts.includes("В");
-    const hasX = parts.includes("Х");
-    const hasM = parts.includes("М");
-    const hasXXX = parts.includes("ХХХ");
+    const hasP = has("П");
+    const hasL = has("Л");
+    const hasV = has("В");
+    const hasX = has("Х");
+    const hasM = has("М");
+    const hasXXX = has("ХХХ");
 
-    if (hasXXX) return "red"; // 1. ХHH всегда красный
-
-    if (hasL && parts.length > 1) return "purple"; // 2. Л с кем-то — фиолетовый
-    if (hasV && (hasX || hasM)) return "green";   // 3. В с Х или М — зелёный
-
-    // 4. П с другими
+    if (hasXXX) return "red";
     if (hasP && hasL) return "gradient-pink-purple";
     if (hasP && hasV) return "gradient-pink-green";
     if (hasP && (hasX || hasM)) return "gradient-pink-red";
-
-    // Одиночные роли
     if (hasL) return "purple";
     if (hasV) return "green";
     if (hasX || hasM) return "red";
