@@ -4,258 +4,252 @@
   <meta charset="UTF-8">
   <title>Мафия — Таблица</title>
   <style>
-    body { font-family: sans-serif; margin:0; padding:10px; background:white; }
-    table { border-collapse: collapse; width:100%; }
-    td, th { border:1px solid #ccc; text-align:center; padding:5px; min-width:40px; }
-    .cell { cursor:pointer; }
-    .red { background-color:#f88!important; }
-    .green { background-color:#8f8!important; }
-    .purple { background-color:#d8b6ff!important; }
-    .pink { background-color:#ffc0cb!important; }
-    .gradient-pink-purple { background: linear-gradient(45deg,#ffc0cb 50%,#d8b6ff 50%); }
-    .gradient-pink-red { background: linear-gradient(45deg,#ffc0cb 50%,#f88 50%); }
-    .gradient-pink-green { background: linear-gradient(45deg,#ffc0cb 50%,#8f8 50%); }
-    .num-red { background-color:#f55!important; color:white; font-weight:bold; }
-    .full-red-row td { background-color:#f88!important; }
-    select { font-size:14px; padding:2px; width:100%; }
-    .legend { background:#f0f0f0; padding:10px; margin-bottom:10px; border-radius:8px; }
+    body { font-family: sans-serif; padding: 10px; background: white; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { border: 1px solid #ccc; padding: 5px; text-align: center; min-width: 40px; }
+    .cell { cursor: pointer; }
+    .red { background: #f88 !important; }
+    .green { background: #8f8 !important; }
+    .purple { background: #d8b6ff !important; }
+    .pink { background: #ffc0cb !important; }
+    .gradient-pink-purple { background: linear-gradient(45deg, #ffc0cb 50%, #d8b6ff 50%); }
+    .gradient-pink-green { background: linear-gradient(45deg, #ffc0cb 50%, #8f8 50%); }
+    .gradient-pink-red { background: linear-gradient(45deg, #ffc0cb 50%, #f88 50%); }
+    .num-red { background: #f55 !important; color: white; font-weight: bold; }
+    .full-red-row td { background-color: #f88 !important; }
     #selectedPlayer {
-      font-size:390px; text-align:center; margin-top:300px;
-      font-weight:bold; color:red;
-      padding-top:400px; padding-bottom:600px;
-    }
-    .actions { margin-bottom:10px; }
-    .actions label { display:inline-block; padding:6px 12px;
-      background:#eee; border:1px solid #ccc; cursor:pointer;
+      font-size: 390px;
+      text-align: center;
+      margin-top: 500px;
+      font-weight: bold;
+      color: red;
+      padding-bottom: 600px;
     }
   </style>
 </head>
 <body>
 
-  <h3>Таблица ночных действий</h3>
-  <div class="legend">
-    <strong>Подсказка по ролям:</strong><br>
-    П — путана, Л — любовница, Х — мафия, Хд — дон, В — доктор,
-    Ш — шериф, М — маньяк, К — камикадзе, С — мститель
-  </div>
+<h3>Таблица ночных действий</h3>
+<div style="background: #f0f0f0; padding: 10px; margin-bottom: 10px;">
+  <b>Подсказка по ролям:</b><br>
+  П — путана, Л — любовница, Х — мафия, Хд — дон, В — доктор, Ш — шериф, М — маньяк, К — камикадзе, С — мститель
+</div>
 
-  <div class="actions">
-    <button onclick="exportData()">💾 Сохранить</button>
-    <label>
-      📂 Загрузить
-      <input type="file" id="loadFile" accept=".json" onchange="importData(event)" style="display:none;">
-    </label>
-    <button onclick="resetTable()">♻️ Сброс</button>
-  </div>
+<div>
+  <button onclick="exportData()">💾 Сохранить</button>
+  <label>📂 Загрузить
+    <input type="file" id="loadFile" style="display:none;" onchange="importData(event)">
+  </label>
+  <button onclick="resetTable()">♻️ Сброс</button>
+</div>
 
-  <table id="mafiaTable">
-    <thead><tr id="headerRow"><th>#</th><th>Роль</th></tr></thead>
-    <tbody id="tableBody"></tbody>
-  </table>
+<table id="mafiaTable">
+  <thead>
+    <tr id="headerRow"><th>#</th><th>Роль</th></tr>
+  </thead>
+  <tbody id="tableBody"></tbody>
+</table>
 
-  <div id="selectedPlayer"></div>
+<div id="selectedPlayer"></div>
 
-  <script>
-    const params = new URLSearchParams(location.search);
-    const playerCount = parseInt(params.get("count")) || 10;
-    const nightCount = 9;
-    const roleOptions = ["", "П","Л","Х","Хд","В","Ш","М","К","С"];
-    const headerRow = document.getElementById("headerRow");
-    const tableBody = document.getElementById("tableBody");
+<script>
+  const playerCount = parseInt(new URLSearchParams(location.search).get("count")) || 10;
+  const nightCount = 9;
+  const headerRow = document.getElementById("headerRow");
+  const tableBody = document.getElementById("tableBody");
 
-    for(let n=1; n<=nightCount; n++){
-      const th = document.createElement("th");
-      th.textContent = `Ночь ${n}`;
-      headerRow.appendChild(th);
-    }
+  for (let n = 1; n <= nightCount; n++) {
+    const th = document.createElement("th");
+    th.textContent = `Ночь ${n}`;
+    headerRow.appendChild(th);
+  }
 
-    function getCellClass(text) {
-      const t = text.toUpperCase();
-      if(t.includes("ХХХ")) return "red";
-      if(t.includes("П") && t.includes("Л")) return "gradient-pink-purple";
-      if(t.includes("П") && t.includes("В")) return "gradient-pink-green";
-      if(t.includes("П") && (t.includes("Х")||t.includes("М"))) return "gradient-pink-red";
-      if(t.includes("Л")) return "purple";
-      if(t.includes("В")) return "green";
-      if(t.includes("Х")||t.includes("М")) return "red";
-      if(t.includes("П")) return "pink";
-      return "";
-    }
+  const roleOptions = ["", "П","Л","Х","Хд","В","Ш","М","К","С"];
 
-    function updateRowHighlight(row) {
-      const cells = [...row.querySelectorAll(".cell")];
-      let redFound = false;
+  function getCellClass(text) {
+    const t = text.toUpperCase();
+    if (t.includes("ХХХ")) return "red";
+    if (t.includes("П") && t.includes("Л")) return "gradient-pink-purple";
+    if (t.includes("П") && t.includes("В")) return "gradient-pink-green";
+    if (t.includes("П") && (t.includes("Х") || t.includes("М"))) return "gradient-pink-red";
+    if (t.includes("Л")) return "purple";
+    if (t.includes("В")) return "green";
+    if (t.includes("Х") || t.includes("М")) return "red";
+    if (t.includes("П")) return "pink";
+    return "";
+  }
 
-      for (let i = 0; i < cells.length; i++) {
-        const text = cells[i].textContent.toUpperCase();
+  function updateRowHighlight(row) {
+    const cells = [...row.querySelectorAll(".cell")];
+    let redFlag = false;
 
-        if (text.includes("ХХХ")) {
-          redFound = true;
-          break;
-        }
+    for (let i = 0; i < cells.length; i++) {
+      const now = cells[i].textContent.toUpperCase();
+      const prev = i > 0 ? cells[i - 1].textContent.toUpperCase() : "";
 
-        const nextCell = cells[i + 1];
-        if (nextCell) {
-          const nextText = nextCell.textContent.toUpperCase();
-          const nextHasKill = nextText.includes("Х") || nextText.includes("М");
-          const nextHasCancel = nextText.includes("Л") || nextText.includes("В");
-          const currHasCancel = text.includes("Л") || text.includes("В");
-
-          if (nextHasKill && !nextHasCancel && !currHasCancel) {
-            redFound = true;
-            break;
-          }
-        }
+      if (now.includes("ХХХ")) {
+        redFlag = true; break;
       }
 
-      row.classList.toggle("full-red-row", redFound);
+      const hasKill = now.includes("Х") || now.includes("М");
+      const hasCancelNow = now.includes("Л") || now.includes("В");
+      const hasCancelPrev = prev.includes("Л") || prev.includes("В");
+
+      if (hasKill && !hasCancelNow && !hasCancelPrev) {
+        redFlag = true;
+        break;
+      }
     }
 
-    function updateNumberColor(row) {
-      const cells = [...row.querySelectorAll(".cell")];
-      const numCell = row.querySelector(".number-cell");
-      let hasRed = false;
+    row.classList.toggle("full-red-row", redFlag);
+  }
 
-      for (let i = 0; i < cells.length; i++) {
-        const text = cells[i].textContent.toUpperCase();
-        if (text.includes("ХХХ")) {
-          hasRed = true;
-          break;
-        }
+  function updateNumberColor(row) {
+    const numberCell = row.querySelector("td");
+    const isRed = row.classList.contains("full-red-row");
+    numberCell.classList.toggle("num-red", isRed);
+  }
 
-        const next = cells[i + 1];
-        if (next) {
-          const nextText = next.textContent.toUpperCase();
-          const nextHasKill = nextText.includes("Х") || nextText.includes("М");
-          const nextHasCancel = nextText.includes("Л") || nextText.includes("В");
-          const currHasCancel = text.includes("Л") || text.includes("В");
+  function createTable(count) {
+    tableBody.innerHTML = "";
+    for (let i = 1; i <= count; i++) {
+      const row = document.createElement("tr");
 
-          if (nextHasKill && !nextHasCancel && !currHasCancel) {
-            hasRed = true;
-            break;
-          }
-        }
+      const numCell = document.createElement("td");
+      numCell.className = "number-cell";
+      numCell.textContent = i;
+      numCell.onclick = () => {
+        document.getElementById("selectedPlayer").textContent = i;
+      };
+      row.appendChild(numCell);
+
+      const roleCell = document.createElement("td");
+      const select = document.createElement("select");
+      roleOptions.forEach(opt => {
+        const o = document.createElement("option");
+        o.value = opt;
+        o.textContent = opt;
+        select.appendChild(o);
+      });
+      roleCell.appendChild(select);
+      row.appendChild(roleCell);
+
+      for (let n = 1; n <= nightCount; n++) {
+        const cell = document.createElement("td");
+        cell.className = "cell";
+        row.appendChild(cell);
       }
 
-      numCell.classList.toggle("num-red", hasRed);
+      tableBody.appendChild(row);
     }
+  }
 
-    function createTable(count){
-      tableBody.innerHTML="";
-      for(let i=1;i<=count;i++){
-        const r=document.createElement("tr");
-        const numCell=document.createElement("td");
-        numCell.className="number-cell"; numCell.style.cursor="pointer";
-        numCell.textContent=i;
-        numCell.onclick=()=>{ document.getElementById("selectedPlayer").textContent=i; };
-        r.appendChild(numCell);
+  createTable(playerCount);
 
-        const rc=document.createElement("td");
-        const sel=document.createElement("select");
-        roleOptions.forEach(o=>{
-          const opt=document.createElement("option");
-          opt.value=o; opt.textContent=o;
-          sel.appendChild(opt);
+  document.addEventListener("click", e => {
+    if (e.target.classList.contains("cell")) {
+      const cell = e.target;
+      const row = cell.parentElement;
+      let input = prompt("Х, М, В, Л, П, Ш, К, С, ХХХ. Удалить — 0. Удалить последнее — 00");
+      if (input === null) return;
+      input = input.toUpperCase().trim();
+
+      if (input === "0") {
+        cell.textContent = "";
+      } else if (input === "00") {
+        const parts = cell.textContent.split("\\");
+        parts.pop();
+        cell.textContent = parts.join("\\");
+      } else if (/^(Х|М|В|Л|П|Ш|К|С|ХХХ)$/.test(input)) {
+        cell.textContent = cell.textContent ? cell.textContent + "\\" + input : input;
+      }
+
+      // Очистка всех стилей
+      cell.className = "cell";
+      const style = getCellClass(cell.textContent);
+      if (style) cell.classList.add(style);
+
+      updateRowHighlight(row);
+      updateNumberColor(row);
+    }
+  });
+
+  function exportData() {
+    const data = { count: playerCount, rows: [] };
+    tableBody.querySelectorAll("tr").forEach(row => {
+      const tds = row.querySelectorAll("td");
+      const role = tds[1].querySelector("select").value;
+      const nights = [...tds].slice(2).map(c => c.textContent);
+      data.rows.push({ role, nights });
+    });
+
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+    const link = document.createElement("a");
+    const now = new Date();
+    const date = now.toISOString().split("T")[0];
+    const time = `${now.getHours()}-${now.getMinutes()}`;
+    link.href = URL.createObjectURL(blob);
+    link.download = `mafia_akm_${date}_${time}.json`;
+    link.click();
+    localStorage.setItem("mafia_table", JSON.stringify(data));
+  }
+
+  function importData(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = evt => {
+      const data = JSON.parse(evt.target.result);
+      createTable(data.count);
+      data.rows.forEach((r, i) => {
+        const row = tableBody.children[i];
+        row.querySelector("select").value = r.role;
+        const cells = [...row.querySelectorAll(".cell")];
+        r.nights.forEach((val, j) => {
+          const c = cells[j];
+          c.textContent = val;
+          c.className = "cell";
+          const style = getCellClass(val);
+          if (style) c.classList.add(style);
         });
-        rc.appendChild(sel);
-        r.appendChild(rc);
-
-        for(let n=1;n<=nightCount;n++){
-          const c=document.createElement("td");
-          c.className="cell"; c.dataset.row=i; c.dataset.col=`night${n}`; c.textContent="";
-          r.appendChild(c);
-        }
-        tableBody.appendChild(r);
-      }
-    }
-
-    createTable(playerCount);
-
-    document.onclick = e => {
-      if(e.target.classList.contains("cell")){
-        const cell=e.target,
-              row=cell.parentElement;
-        let input=prompt("Введите: Х,М,В,Л,П,К,Ш,ХХХ. Удалить—0, последнее—00");
-        if(input===null)return;
-        input=input.toUpperCase().trim();
-        if(input==="0"){
-          cell.textContent=""; cell.className="cell";
-        } else if(input==="00"){
-          const parts=cell.textContent.split("\\");
-          parts.pop();
-          cell.textContent=parts.join("\\");
-          cell.className="cell";
-        } else if(!/^(Х|М|В|Л|П|К|Ш|ХХХ)$/.test(input)){
-          return;
-        } else {
-          cell.textContent = cell.textContent ? cell.textContent + "\\" + input : input;
-        }
-        cell.className="cell";
-        const cl=getCellClass(cell.textContent);
-        if(cl) cell.classList.add(cl);
         updateRowHighlight(row);
         updateNumberColor(row);
-      }
-    };
-
-    function exportData(){
-      const data={count:playerCount,rows:[]};
-      document.querySelectorAll("#tableBody tr").forEach(r=>{
-        const tds=r.querySelectorAll("td");
-        const number=parseInt(tds[0].textContent);
-        const role=tds[1].querySelector("select").value;
-        const nights=Array.from(tds).slice(2).map(c=>c.textContent);
-        data.rows.push({number,role,nights});
       });
-      localStorage.setItem("mafia_table",JSON.stringify(data));
-      const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-      const link=document.createElement("a");
-      const now=new Date();
-      const date=now.toISOString().split("T")[0];
-      const time=`${String(now.getHours()).padStart(2,'0')}-${String(now.getMinutes()).padStart(2,'0')}`;
-      link.href=URL.createObjectURL(blob);
-      link.download=`mafia_akm_${date}_${time}.json`;
-      link.click();
-    }
+    };
+    reader.readAsText(file);
+  }
 
-    function importData(e){
-      const f=e.target.files[0];
-      if(!f)return;
-      const reader=new FileReader();
-      reader.onload=ev=>{
-        const data=JSON.parse(ev.target.result);
-        createTable(data.count);
-        data.rows.forEach((r,idx)=>{
-          const tr=tableBody.children[idx];
-          tr.querySelector("select").value=r.role;
-          r.nights.forEach((val,i)=>{
-            const c=tr.querySelectorAll(".cell")[i];
-            c.textContent=val;
-            c.className="cell";
-            const cl=getCellClass(val);
-            if(cl) c.classList.add(cl);
-          });
-          updateRowHighlight(tr);
-          updateNumberColor(tr);
+  function resetTable() {
+    if (confirm("Очистить всю таблицу?")) {
+      localStorage.removeItem("mafia_table");
+      createTable(playerCount);
+    }
+  }
+
+  window.addEventListener("beforeunload", exportData);
+
+  // Автозагрузка
+  window.addEventListener("DOMContentLoaded", () => {
+    const saved = localStorage.getItem("mafia_table");
+    if (saved) {
+      const data = JSON.parse(saved);
+      createTable(data.count);
+      data.rows.forEach((r, i) => {
+        const row = tableBody.children[i];
+        row.querySelector("select").value = r.role;
+        const cells = [...row.querySelectorAll(".cell")];
+        r.nights.forEach((val, j) => {
+          const c = cells[j];
+          c.textContent = val;
+          c.className = "cell";
+          const style = getCellClass(val);
+          if (style) c.classList.add(style);
         });
-      };
-      reader.readAsText(f);
+        updateRowHighlight(row);
+        updateNumberColor(row);
+      });
     }
-
-    function resetTable(){
-      if(confirm("Очистить всю таблицу?")){
-        localStorage.removeItem("mafia_table");
-        createTable(playerCount);
-      }
-    }
-
-    window.addEventListener("beforeunload", exportData);
-    window.addEventListener("DOMContentLoaded", ()=>{
-      const saved = localStorage.getItem("mafia_table");
-      if(saved){
-        importData({target:{files:[new Blob([saved],{type:'application/json'})]}});
-      }
-    });
-  </script>
+  });
+</script>
 </body>
 </html>
