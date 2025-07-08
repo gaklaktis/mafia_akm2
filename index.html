@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Мафия — Таблица</title>
   <style>
     body { font-family: sans-serif; padding: 10px; background: white; }
@@ -16,7 +16,6 @@
     .gradient-pink-green { background: linear-gradient(45deg, #ffc0cb 50%, #8f8 50%); }
     .gradient-pink-red { background: linear-gradient(45deg, #ffc0cb 50%, #f88 50%); }
     .num-red { background: #f55 !important; color: white; font-weight: bold; }
-    .full-red-row td { background-color: #f88 !important; }
     #selectedPlayer {
       font-size: 390px;
       text-align: center;
@@ -24,6 +23,23 @@
       font-weight: bold;
       color: red;
       padding-bottom: 600px;
+    }
+    /* Стили для кнопки загрузки */
+    #loadFile {
+      display: none;
+    }
+    label[for="loadFile"] {
+      background-color: #eee;
+      border: 1px solid #ccc;
+      padding: 6px 12px;
+      cursor: pointer;
+      user-select: none;
+      margin-left: 10px;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    label[for="loadFile"]:hover {
+      background-color: #ddd;
     }
   </style>
 </head>
@@ -37,9 +53,8 @@
 
 <div>
   <button onclick="exportData()">💾 Сохранить</button>
-  <label>📂 Загрузить
-    <input type="file" id="loadFile" style="display:none;" onchange="importData(event)">
-  </label>
+  <label for="loadFile">📂 Загрузить</label>
+  <input type="file" id="loadFile" accept=".json" />
   <button onclick="resetTable()">♻️ Сброс</button>
 </div>
 
@@ -58,6 +73,7 @@
   const headerRow = document.getElementById("headerRow");
   const tableBody = document.getElementById("tableBody");
 
+  // Добавляем заголовки для ночей
   for (let n = 1; n <= nightCount; n++) {
     const th = document.createElement("th");
     th.textContent = `Ночь ${n}`;
@@ -79,34 +95,32 @@
     return "";
   }
 
-  function updateRowHighlight(row) {
+  // Обновление цвета номера игрока и красной клетки по условию
+  function updateRowColors(row) {
     const cells = [...row.querySelectorAll(".cell")];
-    let redFlag = false;
+    const numCell = row.querySelector("td");
+    // Сбрасываем все красные классы
+    numCell.classList.remove("num-red");
+    cells.forEach(c => c.classList.remove("red"));
 
     for (let i = 0; i < cells.length; i++) {
-      const now = cells[i].textContent.toUpperCase();
+      const val = cells[i].textContent.toUpperCase();
 
-      if (now.includes("ХХХ")) {
-        redFlag = true;
-        break;
+      if (val.includes("ХХХ")) {
+        numCell.classList.add("num-red");
+        cells[i].classList.add("red");
+        return; // сразу красим только этот столбец и номер, выходим
       }
 
-      const hasKill = now.includes("Х") || now.includes("М");
-      const hasCancelNow = now.includes("Л") || now.includes("В");
+      const hasKill = val.includes("Х") || val.includes("М");
+      const hasCancel = val.includes("Л") || val.includes("В");
 
-      if (hasKill && !hasCancelNow) {
-        redFlag = true;
-        break;
+      if (hasKill && !hasCancel) {
+        numCell.classList.add("num-red");
+        cells[i].classList.add("red");
+        return; // красим и выходим
       }
     }
-
-    row.classList.toggle("full-red-row", redFlag);
-  }
-
-  function updateNumberColor(row) {
-    const numberCell = row.querySelector("td");
-    const isRed = row.classList.contains("full-red-row");
-    numberCell.classList.toggle("num-red", isRed);
   }
 
   function createTable(count) {
@@ -163,15 +177,17 @@
         cell.textContent = cell.textContent ? cell.textContent + "\\" + input : input;
       }
 
+      // Обновляем стили ячейки
       cell.className = "cell";
       const style = getCellClass(cell.textContent);
       if (style) cell.classList.add(style);
 
-      updateRowHighlight(row);
-      updateNumberColor(row);
+      // Обновляем цвет номера и ячейки
+      updateRowColors(row);
     }
   });
 
+  // Экспорт данных в файл и localStorage
   function exportData() {
     const data = { count: playerCount, rows: [] };
     tableBody.querySelectorAll("tr").forEach(row => {
@@ -189,9 +205,11 @@
     link.href = URL.createObjectURL(blob);
     link.download = `mafia_akm_${date}_${time}.json`;
     link.click();
+
     localStorage.setItem("mafia_table", JSON.stringify(data));
   }
 
+  // Импорт из файла
   function importData(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -210,13 +228,15 @@
           const style = getCellClass(val);
           if (style) c.classList.add(style);
         });
-        updateRowHighlight(row);
-        updateNumberColor(row);
+        updateRowColors(row);
       });
     };
     reader.readAsText(file);
+    // Сбрасываем value, чтобы можно было загрузить один и тот же файл повторно
+    e.target.value = "";
   }
 
+  // Сброс таблицы
   function resetTable() {
     if (confirm("Очистить всю таблицу?")) {
       localStorage.removeItem("mafia_table");
@@ -224,6 +244,7 @@
     }
   }
 
+  // События
   window.addEventListener("beforeunload", exportData);
 
   window.addEventListener("DOMContentLoaded", () => {
@@ -242,11 +263,13 @@
           const style = getCellClass(val);
           if (style) c.classList.add(style);
         });
-        updateRowHighlight(row);
-        updateNumberColor(row);
+        updateRowColors(row);
       });
     }
   });
+
+  // Обработчик кнопки загрузки файла
+  document.getElementById("loadFile").addEventListener("change", importData);
 </script>
 </body>
 </html>
