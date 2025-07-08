@@ -107,16 +107,13 @@
 
     for (let i = 0; i < cells.length; i++) {
       const val = cells[i].textContent.toUpperCase();
-
       if (val.includes("ХХХ")) {
         numCell.classList.add("num-red");
         cells[i].classList.add("red");
         return;
       }
-
       const hasKill = val.includes("Х") || val.includes("М");
       const hasCancel = val.includes("Л") || val.includes("В");
-
       if (hasKill && !hasCancel) {
         numCell.classList.add("num-red");
         cells[i].classList.add("red");
