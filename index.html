@@ -20,7 +20,7 @@
     select { font-size:14px; padding:2px; width:100%; }
     .legend { background:#f0f0f0; padding:10px; margin-bottom:10px; border-radius:8px; }
     #selectedPlayer {
-      font-size:390px; text-align:center; margin-top:200px;
+      font-size:390px; text-align:center; margin-top:300px;
       font-weight:bold; color:red;
       padding-top:400px; padding-bottom:600px;
     }
@@ -84,16 +84,20 @@
 
     function updateRowHighlight(row){
       const cells = [...row.querySelectorAll(".cell")];
-      let redFound=false, cancelFound=false;
+      let redFound=false, cancelFound=false, purpleFound=false;
+
       let lastCancelIdx=-1;
 
       cells.forEach((cell,i)=>{
-        const cls = getCellClass(cell.textContent);
-        if(["green","purple","gradient-pink-green"].includes(cls)) cancelFound=true, lastCancelIdx=i;
+        const t = cell.textContent.toUpperCase();
+        if(t.includes("Л") || t.includes("В")) { cancelFound=true; lastCancelIdx=i; }
       });
+
       cells.forEach((cell,i)=>{
-        if( (cell.textContent.toUpperCase().includes("Х")||cell.textContent.toUpperCase().includes("М")) ){
-          if(i>lastCancelIdx) redFound=true;
+        const t = cell.textContent.toUpperCase();
+        if(t.includes("ХХХ")) redFound = true;
+        if((t.includes("Х") || t.includes("М")) && i > lastCancelIdx && !cancelFound) {
+          redFound = true;
         }
       });
 
@@ -106,12 +110,13 @@
       let hasRed=false, hasCancel=false;
 
       cells.forEach(cell=>{
-        const cls=getCellClass(cell.textContent);
-        if(["green","purple","gradient-pink-green"].includes(cls)) hasCancel=true;
-        if(["red","gradient-pink-red"].includes(cls) || cell.textContent.toUpperCase().includes("ХХХ")) hasRed=true;
+        const t = cell.textContent.toUpperCase();
+        if(t.includes("Л")) hasCancel=true;
+        if(t.includes("ХХХ")) hasRed=true;
+        if((t.includes("Х")||t.includes("М")) && !hasCancel) hasRed=true;
       });
 
-      numCell.classList.toggle("num-red", hasRed&&!hasCancel);
+      numCell.classList.toggle("num-red", hasRed);
     }
 
     function createTable(count){
