@@ -6,12 +6,7 @@
   <style>
     body { font-family: sans-serif; margin: 0; padding: 10px; background: white; }
     table { border-collapse: collapse; width: 100%; }
-    td, th {
-      border: 1px solid #ccc;
-      text-align: center;
-      padding: 5px;
-      min-width: 40px;
-    }
+    td, th { border: 1px solid #ccc; text-align: center; padding: 5px; min-width: 40px; }
     .cell { cursor: pointer; }
     .red { background-color: #f88 !important; }
     .green { background-color: #8f8 !important; }
@@ -22,26 +17,10 @@
     .gradient-pink-green { background: linear-gradient(45deg, #ffc0cb 50%, #8f8 50%); }
     .num-red { background-color: #f55 !important; color: white; font-weight: bold; }
     .full-red-row td { background-color: #f88 !important; }
-    select {
-      font-size: 14px;
-      padding: 2px;
-      width: 100%;
-    }
-    .legend {
-      background: #f0f0f0;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 8px;
-    }
-    #selectedPlayer {
-      font-size: 390px;
-      text-align: center;
-      margin-top: 100px;
-      font-weight: bold;
-      color: red;
-      padding-top: 400px;
-      padding-bottom: 600px;
-    }
+    select { font-size: 14px; padding: 2px; width: 100%; }
+    .legend { background: #f0f0f0; padding: 10px; margin-bottom: 10px; border-radius: 8px; }
+    #selectedPlayer { font-size: 390px; text-align: center; margin-top: 100px; font-weight: bold; color: red; padding-top: 400px; padding-bottom: 600px; }
+    .actions { margin-bottom: 10px; }
   </style>
 </head>
 <body>
@@ -49,6 +28,11 @@
   <div class="legend">
     <strong>Подсказка по ролям:</strong><br />
     П — путана, Л — любовница, Х — мафия, Хд — дон, В — доктор, Ш — шериф, М — маньяк, К — камикадзе, С — мститель
+  </div>
+
+  <div class="actions">
+    <button onclick="exportData()">💾 Сохранить</button>
+    <input type="file" id="loadFile" accept=".json" onchange="importData(event)" />
   </div>
 
   <table id="mafiaTable">
@@ -69,19 +53,18 @@
     const playerCount = (!isNaN(parseInt(countParam)) && parseInt(countParam) >= 1) ? parseInt(countParam) : 10;
     const nightCount = 9;
 
+    const roleOptions = ["", "П", "Л", "Х", "Хд", "В", "Ш", "М", "К", "С"];
     const headerRow = document.getElementById("headerRow");
+    const tableBody = document.getElementById("tableBody");
+
     for (let n = 1; n <= nightCount; n++) {
       const th = document.createElement("th");
       th.textContent = `Ночь ${n}`;
       headerRow.appendChild(th);
     }
 
-    const tableBody = document.getElementById("tableBody");
-    const roleOptions = ["", "П", "Л", "Х", "Хд", "В", "Ш", "М", "К", "С"];
-
     function getCellClass(text) {
       const t = text.toUpperCase();
-
       if (t.includes("ХХХ")) return "red";
       if (t.includes("П") && t.includes("Л")) return "gradient-pink-purple";
       if (t.includes("П") && t.includes("В")) return "gradient-pink-green";
@@ -90,7 +73,6 @@
       if (t.includes("В")) return "green";
       if (t.includes("Х") || t.includes("М")) return "red";
       if (t.includes("П")) return "pink";
-
       return "";
     }
 
@@ -102,8 +84,8 @@
       cells.forEach(cell => {
         const text = cell.textContent.toUpperCase();
         const className = getCellClass(text);
-        if (className === "green" || className === "purple" || className === "gradient-pink-green") cancelFound = true;
-        if (className === "red" || className === "gradient-pink-red" || text.includes("ХХХ")) redFound = true;
+        if (["green", "purple", "gradient-pink-green"].includes(className)) cancelFound = true;
+        if (["red", "gradient-pink-red"].includes(className) || text.includes("ХХХ")) redFound = true;
       });
 
       if (redFound && !cancelFound) {
@@ -116,15 +98,14 @@
     function updateNumberColor(row) {
       const nightCells = Array.from(row.querySelectorAll(".cell"));
       const numCell = row.querySelector(".number-cell");
-
       let hasRed = false;
       let hasCancel = false;
 
       for (const cell of nightCells) {
         const text = cell.textContent.toUpperCase();
         const className = getCellClass(text);
-        if (className === "green" || className === "purple" || className === "gradient-pink-green") hasCancel = true;
-        if (className === "red" || className === "gradient-pink-red" || text.includes("ХХХ")) hasRed = true;
+        if (["green", "purple", "gradient-pink-green"].includes(className)) hasCancel = true;
+        if (["red", "gradient-pink-red"].includes(className) || text.includes("ХХХ")) hasRed = true;
       }
 
       if (hasRed && !hasCancel) {
@@ -134,47 +115,49 @@
       }
     }
 
-    for (let i = 1; i <= playerCount; i++) {
-      const row = document.createElement("tr");
+    function createTable(count) {
+      tableBody.innerHTML = "";
+      for (let i = 1; i <= count; i++) {
+        const row = document.createElement("tr");
+        const numCell = document.createElement("td");
+        numCell.textContent = i;
+        numCell.className = "number-cell";
+        numCell.style.cursor = "pointer";
+        numCell.addEventListener("click", () => {
+          document.getElementById("selectedPlayer").textContent = i;
+        });
+        row.appendChild(numCell);
 
-      const numCell = document.createElement("td");
-      numCell.textContent = i;
-      numCell.className = "number-cell";
-      numCell.style.cursor = "pointer";
-      numCell.addEventListener("click", () => {
-        document.getElementById("selectedPlayer").textContent = i;
-      });
-      row.appendChild(numCell);
+        const roleCell = document.createElement("td");
+        const select = document.createElement("select");
+        roleOptions.forEach(opt => {
+          const o = document.createElement("option");
+          o.value = opt;
+          o.textContent = opt;
+          select.appendChild(o);
+        });
+        roleCell.appendChild(select);
+        row.appendChild(roleCell);
 
-      const roleCell = document.createElement("td");
-      const select = document.createElement("select");
-      roleOptions.forEach(opt => {
-        const o = document.createElement("option");
-        o.value = opt;
-        o.textContent = opt;
-        select.appendChild(o);
-      });
-      roleCell.appendChild(select);
-      row.appendChild(roleCell);
-
-      for (let night = 1; night <= nightCount; night++) {
-        const cell = document.createElement("td");
-        cell.className = "cell";
-        cell.dataset.row = i;
-        cell.dataset.col = `night${night}`;
-        cell.textContent = "";
-        row.appendChild(cell);
+        for (let night = 1; night <= nightCount; night++) {
+          const cell = document.createElement("td");
+          cell.className = "cell";
+          cell.dataset.row = i;
+          cell.dataset.col = `night${night}`;
+          cell.textContent = "";
+          row.appendChild(cell);
+        }
+        tableBody.appendChild(row);
       }
-
-      tableBody.appendChild(row);
     }
+
+    createTable(playerCount);
 
     document.addEventListener("click", (e) => {
       if (e.target.classList.contains("cell")) {
         const cell = e.target;
         let input = prompt("Введите действие: Х, М, В, Л, П, К, Ш, ХХХ. Удалить все — 0, удалить последнее — 00");
         if (input === null) return;
-
         input = input.toUpperCase().trim();
         const row = cell.parentElement;
 
@@ -185,7 +168,6 @@
           updateNumberColor(row);
           return;
         }
-
         if (input === "00") {
           const current = cell.textContent;
           if (current.includes("\\")) {
@@ -202,27 +184,86 @@
           updateNumberColor(row);
           return;
         }
-
         if (!/^(Х|М|В|Л|П|К|Ш|ХХХ)$/.test(input)) return;
 
         const previous = cell.textContent;
         const updated = previous ? previous + "\\" + input : input;
         cell.textContent = updated;
-
         cell.className = "cell";
         const className = getCellClass(updated);
         if (className) cell.classList.add(className);
-
         updateRowHighlight(row);
         updateNumberColor(row);
       }
     });
 
-    // Не перезагружать при возврате на страницу
-    document.addEventListener("visibilitychange", () => {
-      if (!document.hidden) {
-        document.body.style.backgroundColor = "white";
-        document.documentElement.style.backgroundColor = "white";
+    function exportData() {
+      const data = {
+        count: playerCount,
+        rows: []
+      };
+      tableBody.querySelectorAll("tr").forEach((row, idx) => {
+        const cells = row.querySelectorAll("td");
+        const number = parseInt(cells[0].textContent);
+        const role = cells[1].querySelector("select").value;
+        const nights = Array.from(cells).slice(2).map(c => c.textContent);
+        data.rows.push({ number, role, nights });
+      });
+      localStorage.setItem("mafia_table", JSON.stringify(data));
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const link = document.createElement("a");
+      const date = new Date().toISOString().split("T")[0];
+      link.href = URL.createObjectURL(blob);
+      link.download = `${date}_mafia_akm_bot.json`;
+      link.click();
+    }
+
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = JSON.parse(e.target.result);
+        createTable(content.count);
+        content.rows.forEach((r, idx) => {
+          const row = tableBody.children[idx];
+          row.querySelector("select").value = r.role;
+          const nightCells = row.querySelectorAll(".cell");
+          r.nights.forEach((val, i) => {
+            const cell = nightCells[i];
+            cell.textContent = val;
+            cell.className = "cell";
+            const className = getCellClass(val);
+            if (className) cell.classList.add(className);
+          });
+          updateRowHighlight(row);
+          updateNumberColor(row);
+        });
+      };
+      reader.readAsText(file);
+    }
+
+    window.addEventListener("beforeunload", exportData);
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const saved = localStorage.getItem("mafia_table");
+      if (saved) {
+        const content = JSON.parse(saved);
+        createTable(content.count);
+        content.rows.forEach((r, idx) => {
+          const row = tableBody.children[idx];
+          row.querySelector("select").value = r.role;
+          const nightCells = row.querySelectorAll(".cell");
+          r.nights.forEach((val, i) => {
+            const cell = nightCells[i];
+            cell.textContent = val;
+            cell.className = "cell";
+            const className = getCellClass(val);
+            if (className) cell.classList.add(className);
+          });
+          updateRowHighlight(row);
+          updateNumberColor(row);
+        });
       }
     });
   </script>
