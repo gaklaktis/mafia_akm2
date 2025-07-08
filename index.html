@@ -1,136 +1,128 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
   <meta charset="UTF-8" />
   <title>Мафия — Таблица</title>
   <style>
-    body { font-family: sans-serif; padding: 10px; background: white; }
+    body { font-family: sans-serif; padding: 10px; }
     table { border-collapse: collapse; width: 100%; }
-    td, th { border: 1px solid #ccc; padding: 5px; text-align: center; min-width: 40px; }
-    .cell { cursor: pointer; }
-    .red { background: #f88 !important; }
-    .green { background: #8f8 !important; }
-    .purple { background: #d8b6ff !important; }
-    .pink { background: #ffc0cb !important; }
-    .gradient-pink-purple { background: linear-gradient(45deg, #ffc0cb 50%, #d8b6ff 50%); }
-    .gradient-pink-green { background: linear-gradient(45deg, #ffc0cb 50%, #8f8 50%); }
-    .gradient-pink-red { background: linear-gradient(45deg, #ffc0cb 50%, #f88 50%); }
-    .num-red { background: #f55 !important; color: white; font-weight: bold; }
-    #selectedPlayer {
-      font-size: 390px;
-      text-align: center;
-      margin-top: 500px;
-      font-weight: bold;
-      color: red;
-      padding-bottom: 600px;
-    }
-    /* Стили для кнопки загрузки */
-    #loadFile {
-      display: none;
-    }
-    label[for="loadFile"] {
-      background-color: #eee;
+    td, th {
       border: 1px solid #ccc;
-      padding: 6px 12px;
-      cursor: pointer;
-      user-select: none;
-      margin-left: 10px;
-      border-radius: 4px;
-      font-size: 14px;
+      padding: 6px;
+      text-align: center;
+      min-width: 40px;
     }
-    label[for="loadFile"]:hover {
-      background-color: #ddd;
+    .cell { cursor: pointer; }
+    .red { background: #f88; }
+    .green { background: #8f8; }
+    .purple { background: #d8b6ff; }
+    .pink { background: #ffc0cb; }
+    .num-red { background: #f55; color: white; font-weight: bold; }
+
+    .gradient-pink-red {
+      background: linear-gradient(135deg, #ffc0cb 50%, #f88 50%);
+    }
+    .gradient-pink-green {
+      background: linear-gradient(135deg, #ffc0cb 50%, #8f8 50%);
+    }
+    .gradient-pink-purple {
+      background: linear-gradient(135deg, #ffc0cb 50%, #d8b6ff 50%);
     }
   </style>
 </head>
 <body>
 
-<h3>Таблица ночных действий</h3>
-<div style="background: #f0f0f0; padding: 10px; margin-bottom: 10px;">
+<h2>📋 Таблица действий «Мафия»</h2>
+<div>
   <b>Подсказка по ролям:</b><br>
   П — путана, Л — любовница, Х — мафия, Хд — дон, В — доктор, Ш — шериф, М — маньяк, К — камикадзе, С — мститель
 </div>
-
-<div>
-  <button onclick="exportData()">💾 Сохранить</button>
-  <label for="loadFile">📂 Загрузить</label>
-  <input type="file" id="loadFile" accept=".json" />
-  <button onclick="resetTable()">♻️ Сброс</button>
-</div>
+<br>
 
 <table id="mafiaTable">
   <thead>
-    <tr id="headerRow"><th>#</th><th>Роль</th></tr>
+    <tr id="headerRow">
+      <th>№</th>
+      <th>Роль</th>
+    </tr>
   </thead>
   <tbody id="tableBody"></tbody>
 </table>
 
-<div id="selectedPlayer"></div>
+<div id="selectedPlayer" style="font-size:390px; color:red; text-align:center; margin-top:400px;"></div>
 
 <script>
-  const playerCount = parseInt(new URLSearchParams(location.search).get("count")) || 10;
+  const playerCount = parseInt(new URLSearchParams(window.location.search).get("count")) || 10;
   const nightCount = 9;
   const headerRow = document.getElementById("headerRow");
   const tableBody = document.getElementById("tableBody");
 
-  // Добавляем заголовки для ночей
+  const roleOptions = ["", "П","Л","Х","Хд","В","Ш","М","К","С"];
+
+  // Добавить заголовки ночей
   for (let n = 1; n <= nightCount; n++) {
     const th = document.createElement("th");
     th.textContent = `Ночь ${n}`;
     headerRow.appendChild(th);
   }
 
-  const roleOptions = ["", "П","Л","Х","Хд","В","Ш","М","К","С"];
-
   function getCellClass(text) {
     const t = text.toUpperCase();
+
     if (t.includes("ХХХ")) return "red";
-    if (t.includes("П") && t.includes("Л")) return "gradient-pink-purple";
-    if (t.includes("П") && t.includes("В")) return "gradient-pink-green";
-    if (t.includes("П") && (t.includes("Х") || t.includes("М"))) return "gradient-pink-red";
-    if (t.includes("Л")) return "purple";
-    if (t.includes("В")) return "green";
-    if (t.includes("Х") || t.includes("М")) return "red";
-    if (t.includes("П")) return "pink";
+    const hasP = t.includes("П");
+    const hasX = t.includes("Х");
+    const hasM = t.includes("М");
+    const hasV = t.includes("В");
+    const hasL = t.includes("Л");
+
+    if (hasP && (hasX || hasM) && hasV) return "gradient-pink-green";
+    if (hasP && (hasX || hasM) && hasL) return "gradient-pink-purple";
+    if (hasP && (hasX || hasM)) return "gradient-pink-red";
+    if (hasV) return "green";
+    if (hasL) return "purple";
+    if (hasX || hasM) return "red";
+    if (hasP) return "pink";
     return "";
   }
 
-  // Обновление цвета номера игрока и красной клетки по условию
   function updateRowColors(row) {
-    const cells = [...row.querySelectorAll(".cell")];
-    const numCell = row.querySelector("td");
-    // Сбрасываем все красные классы
-    numCell.classList.remove("num-red");
-    cells.forEach(c => c.classList.remove("red"));
+    const cells = row.querySelectorAll(".cell");
+    const numberCell = row.querySelector("td");
 
-    for (let i = 0; i < cells.length; i++) {
-      const val = cells[i].textContent.toUpperCase();
+    numberCell.classList.remove("num-red");
 
+    for (const cell of cells) {
+      const val = cell.textContent.toUpperCase();
+      const hasKill = val.includes("Х") || val.includes("М") || val.includes("ХХХ");
+      const hasProtection = val.includes("В") || val.includes("Л");
+      const hasP = val.includes("П");
+
+      // Условие для полной смерти
       if (val.includes("ХХХ")) {
-        numCell.classList.add("num-red");
-        cells[i].classList.add("red");
-        return; // сразу красим только этот столбец и номер, выходим
+        numberCell.classList.add("num-red");
+        break;
       }
 
-      const hasKill = val.includes("Х") || val.includes("М");
-      const hasCancel = val.includes("Л") || val.includes("В");
+      if (hasP && (val.includes("Х") || val.includes("М")) && !hasProtection) {
+        numberCell.classList.add("num-red");
+        break;
+      }
 
-      if (hasKill && !hasCancel) {
-        numCell.classList.add("num-red");
-        cells[i].classList.add("red");
-        return; // красим и выходим
+      if ((val.includes("Х") || val.includes("М")) && !hasProtection) {
+        numberCell.classList.add("num-red");
+        break;
       }
     }
   }
 
-  function createTable(count) {
-    tableBody.innerHTML = "";
-    for (let i = 1; i <= count; i++) {
+  function createTable() {
+    for (let i = 1; i <= playerCount; i++) {
       const row = document.createElement("tr");
 
       const numCell = document.createElement("td");
-      numCell.className = "number-cell";
       numCell.textContent = i;
+      numCell.className = "number-cell";
       numCell.onclick = () => {
         document.getElementById("selectedPlayer").textContent = i;
       };
@@ -157,119 +149,38 @@
     }
   }
 
-  createTable(playerCount);
+  createTable();
 
   document.addEventListener("click", e => {
-    if (e.target.classList.contains("cell")) {
-      const cell = e.target;
-      const row = cell.parentElement;
-      let input = prompt("Х, М, В, Л, П, Ш, К, С, ХХХ. Удалить — 0. Удалить последнее — 00");
-      if (input === null) return;
-      input = input.toUpperCase().trim();
+    if (!e.target.classList.contains("cell")) return;
+    const cell = e.target;
+    const row = cell.parentElement;
 
-      if (input === "0") {
-        cell.textContent = "";
-      } else if (input === "00") {
-        const parts = cell.textContent.split("\\");
-        parts.pop();
-        cell.textContent = parts.join("\\");
-      } else if (/^(Х|М|В|Л|П|Ш|К|С|ХХХ)$/.test(input)) {
-        cell.textContent = cell.textContent ? cell.textContent + "\\" + input : input;
+    let input = prompt("Введите действия (пример: П, Х, В, М, Л и т.п.).\nУдалить: 0. Удалить последнее: 00.");
+    if (input === null) return;
+    input = input.trim().toUpperCase();
+
+    if (input === "0") {
+      cell.textContent = "";
+    } else if (input === "00") {
+      const parts = cell.textContent.split("\\");
+      parts.pop();
+      cell.textContent = parts.join("\\");
+    } else if (/^(Х|М|В|Л|П|Ш|К|С|ХХХ)$/.test(input)) {
+      if (cell.textContent) {
+        cell.textContent += "\\" + input;
+      } else {
+        cell.textContent = input;
       }
-
-      // Обновляем стили ячейки
-      cell.className = "cell";
-      const style = getCellClass(cell.textContent);
-      if (style) cell.classList.add(style);
-
-      // Обновляем цвет номера и ячейки
-      updateRowColors(row);
     }
+
+    // Применить стили
+    cell.className = "cell";
+    const style = getCellClass(cell.textContent);
+    if (style) cell.classList.add(style);
+
+    updateRowColors(row);
   });
-
-  // Экспорт данных в файл и localStorage
-  function exportData() {
-    const data = { count: playerCount, rows: [] };
-    tableBody.querySelectorAll("tr").forEach(row => {
-      const tds = row.querySelectorAll("td");
-      const role = tds[1].querySelector("select").value;
-      const nights = [...tds].slice(2).map(c => c.textContent);
-      data.rows.push({ role, nights });
-    });
-
-    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-    const link = document.createElement("a");
-    const now = new Date();
-    const date = now.toISOString().split("T")[0];
-    const time = `${now.getHours()}-${now.getMinutes()}`;
-    link.href = URL.createObjectURL(blob);
-    link.download = `mafia_akm_${date}_${time}.json`;
-    link.click();
-
-    localStorage.setItem("mafia_table", JSON.stringify(data));
-  }
-
-  // Импорт из файла
-  function importData(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = evt => {
-      const data = JSON.parse(evt.target.result);
-      createTable(data.count);
-      data.rows.forEach((r, i) => {
-        const row = tableBody.children[i];
-        row.querySelector("select").value = r.role;
-        const cells = [...row.querySelectorAll(".cell")];
-        r.nights.forEach((val, j) => {
-          const c = cells[j];
-          c.textContent = val;
-          c.className = "cell";
-          const style = getCellClass(val);
-          if (style) c.classList.add(style);
-        });
-        updateRowColors(row);
-      });
-    };
-    reader.readAsText(file);
-    // Сбрасываем value, чтобы можно было загрузить один и тот же файл повторно
-    e.target.value = "";
-  }
-
-  // Сброс таблицы
-  function resetTable() {
-    if (confirm("Очистить всю таблицу?")) {
-      localStorage.removeItem("mafia_table");
-      createTable(playerCount);
-    }
-  }
-
-  // События
-  window.addEventListener("beforeunload", exportData);
-
-  window.addEventListener("DOMContentLoaded", () => {
-    const saved = localStorage.getItem("mafia_table");
-    if (saved) {
-      const data = JSON.parse(saved);
-      createTable(data.count);
-      data.rows.forEach((r, i) => {
-        const row = tableBody.children[i];
-        row.querySelector("select").value = r.role;
-        const cells = [...row.querySelectorAll(".cell")];
-        r.nights.forEach((val, j) => {
-          const c = cells[j];
-          c.textContent = val;
-          c.className = "cell";
-          const style = getCellClass(val);
-          if (style) c.classList.add(style);
-        });
-        updateRowColors(row);
-      });
-    }
-  });
-
-  // Обработчик кнопки загрузки файла
-  document.getElementById("loadFile").addEventListener("change", importData);
 </script>
 </body>
 </html>
