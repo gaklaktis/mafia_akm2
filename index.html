@@ -1,68 +1,69 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Мафия — Таблица</title>
   <style>
-    body { font-family: sans-serif; margin: 0; padding: 10px; background: white; }
-    table { border-collapse: collapse; width: 100%; }
-    td, th { border: 1px solid #ccc; text-align: center; padding: 5px; min-width: 40px; }
-    .cell { cursor: pointer; }
-    .red { background-color: #f88 !important; }
-    .green { background-color: #8f8 !important; }
-    .purple { background-color: #d8b6ff !important; }
-    .pink { background-color: #ffc0cb !important; }
-    .gradient-pink-purple { background: linear-gradient(45deg, #ffc0cb 50%, #d8b6ff 50%); }
-    .gradient-pink-red { background: linear-gradient(45deg, #ffc0cb 50%, #f88 50%); }
-    .gradient-pink-green { background: linear-gradient(45deg, #ffc0cb 50%, #8f8 50%); }
-    .num-red { background-color: #f55 !important; color: white; font-weight: bold; }
-    .full-red-row td { background-color: #f88 !important; }
-    select { font-size: 14px; padding: 2px; width: 100%; }
-    .legend { background: #f0f0f0; padding: 10px; margin-bottom: 10px; border-radius: 8px; }
-    #selectedPlayer { font-size: 390px; text-align: center; margin-top: 200px; font-weight: bold; color: red; padding-top: 400px; padding-bottom: 600px; }
-    .actions { margin-bottom: 10px; }
+    body { font-family: sans-serif; margin:0; padding:10px; background:white; }
+    table { border-collapse: collapse; width:100%; }
+    td, th { border:1px solid #ccc; text-align:center; padding:5px; min-width:40px; }
+    .cell { cursor:pointer; }
+    .red { background-color:#f88!important; }
+    .green { background-color:#8f8!important; }
+    .purple { background-color:#d8b6ff!important; }
+    .pink { background-color:#ffc0cb!important; }
+    .gradient-pink-purple { background: linear-gradient(45deg,#ffc0cb 50%,#d8b6ff 50%); }
+    .gradient-pink-red { background: linear-gradient(45deg,#ffc0cb 50%,#f88 50%); }
+    .gradient-pink-green { background: linear-gradient(45deg,#ffc0cb 50%,#8f8 50%); }
+    .num-red { background-color:#f55!important; color:white; font-weight:bold; }
+    .full-red-row td { background-color:#f88!important; }
+    select { font-size:14px; padding:2px; width:100%; }
+    .legend { background:#f0f0f0; padding:10px; margin-bottom:10px; border-radius:8px; }
+    #selectedPlayer {
+      font-size:390px; text-align:center; margin-top:200px;
+      font-weight:bold; color:red;
+      padding-top:400px; padding-bottom:600px;
+    }
+    .actions { margin-bottom:10px; }
+    .actions label { display:inline-block; padding:6px 12px;
+      background:#eee; border:1px solid #ccc; cursor:pointer;
+    }
   </style>
 </head>
 <body>
-  <h3>Таблица ночных действий</h3>
 
+  <h3>Таблица ночных действий</h3>
   <div class="legend">
-    <strong>Подсказка по ролям:</strong><br />
-    П — путана, Л — любовница, Х — мафия, Хд — дон, В — доктор, Ш — шериф, М — маньяк, К — камикадзе, С — мститель
+    <strong>Подсказка по ролям:</strong><br>
+    П — путана, Л — любовница, Х — мафия, Хд — дон, В — доктор,
+    Ш — шериф, М — маньяк, К — камикадзе, С — мститель
   </div>
 
   <div class="actions">
     <button onclick="exportData()">💾 Сохранить</button>
-    <label style="display:inline-block; padding:6px 12px; background:#eee; border:1px solid #ccc; cursor:pointer;">
+    <label>
       📂 Загрузить
-      <input type="file" id="loadFile" accept=".json" onchange="importData(event)" style="display:none;" />
+      <input type="file" id="loadFile" accept=".json" onchange="importData(event)" style="display:none;">
     </label>
     <button onclick="resetTable()">♻️ Сброс</button>
   </div>
 
   <table id="mafiaTable">
-    <thead>
-      <tr id="headerRow">
-        <th>#</th>
-        <th>Роль</th>
-      </tr>
-    </thead>
+    <thead><tr id="headerRow"><th>#</th><th>Роль</th></tr></thead>
     <tbody id="tableBody"></tbody>
   </table>
 
   <div id="selectedPlayer"></div>
 
   <script>
-    const params = new URLSearchParams(window.location.search);
-    const countParam = params.get("count");
-    const playerCount = (!isNaN(parseInt(countParam)) && parseInt(countParam) >= 1) ? parseInt(countParam) : 10;
+    const params = new URLSearchParams(location.search);
+    const playerCount = parseInt(params.get("count")) || 10;
     const nightCount = 9;
-    const roleOptions = ["", "П", "Л", "Х", "Хд", "В", "Ш", "М", "К", "С"];
-
+    const roleOptions = ["", "П","Л","Х","Хд","В","Ш","М","К","С"];
     const headerRow = document.getElementById("headerRow");
     const tableBody = document.getElementById("tableBody");
 
-    for (let n = 1; n <= nightCount; n++) {
+    for(let n=1; n<=nightCount; n++){
       const th = document.createElement("th");
       th.textContent = `Ночь ${n}`;
       headerRow.appendChild(th);
@@ -70,214 +71,163 @@
 
     function getCellClass(text) {
       const t = text.toUpperCase();
-      if (t.includes("ХХХ")) return "red";
-      if (t.includes("П") && t.includes("Л")) return "gradient-pink-purple";
-      if (t.includes("П") && t.includes("В")) return "gradient-pink-green";
-      if (t.includes("П") && (t.includes("Х") || t.includes("М"))) return "gradient-pink-red";
-      if (t.includes("Л")) return "purple";
-      if (t.includes("В")) return "green";
-      if (t.includes("Х") || t.includes("М")) return "red";
-      if (t.includes("П")) return "pink";
+      if(t.includes("ХХХ")) return "red";
+      if(t.includes("П") && t.includes("Л")) return "gradient-pink-purple";
+      if(t.includes("П") && t.includes("В")) return "gradient-pink-green";
+      if(t.includes("П") && (t.includes("Х")||t.includes("М"))) return "gradient-pink-red";
+      if(t.includes("Л")) return "purple";
+      if(t.includes("В")) return "green";
+      if(t.includes("Х")||t.includes("М")) return "red";
+      if(t.includes("П")) return "pink";
       return "";
     }
 
-    function updateRowHighlight(row) {
-      const cells = row.querySelectorAll(".cell");
-      let redFound = false;
-      let cancelFound = false;
+    function updateRowHighlight(row){
+      const cells = [...row.querySelectorAll(".cell")];
+      let redFound=false, cancelFound=false;
+      let lastCancelIdx=-1;
 
-      cells.forEach(cell => {
-        const text = cell.textContent.toUpperCase();
-        const className = getCellClass(text);
-        if (["green", "purple", "gradient-pink-green"].includes(className)) cancelFound = true;
-        if (["red", "gradient-pink-red"].includes(className) || text.includes("ХХХ")) redFound = true;
+      cells.forEach((cell,i)=>{
+        const cls = getCellClass(cell.textContent);
+        if(["green","purple","gradient-pink-green"].includes(cls)) cancelFound=true, lastCancelIdx=i;
+      });
+      cells.forEach((cell,i)=>{
+        if( (cell.textContent.toUpperCase().includes("Х")||cell.textContent.toUpperCase().includes("М")) ){
+          if(i>lastCancelIdx) redFound=true;
+        }
       });
 
-      if (redFound && !cancelFound) {
-        row.classList.add("full-red-row");
-      } else {
-        row.classList.remove("full-red-row");
-      }
+      row.classList.toggle("full-red-row", redFound);
     }
 
-    function updateNumberColor(row) {
-      const nightCells = Array.from(row.querySelectorAll(".cell"));
+    function updateNumberColor(row){
+      const cells=[...row.querySelectorAll(".cell")];
       const numCell = row.querySelector(".number-cell");
-      let hasRed = false;
-      let hasCancel = false;
+      let hasRed=false, hasCancel=false;
 
-      for (const cell of nightCells) {
-        const text = cell.textContent.toUpperCase();
-        const className = getCellClass(text);
-        if (["green", "purple", "gradient-pink-green"].includes(className)) hasCancel = true;
-        if (["red", "gradient-pink-red"].includes(className) || text.includes("ХХХ")) hasRed = true;
-      }
+      cells.forEach(cell=>{
+        const cls=getCellClass(cell.textContent);
+        if(["green","purple","gradient-pink-green"].includes(cls)) hasCancel=true;
+        if(["red","gradient-pink-red"].includes(cls) || cell.textContent.toUpperCase().includes("ХХХ")) hasRed=true;
+      });
 
-      if (hasRed && !hasCancel) {
-        numCell.classList.add("num-red");
-      } else {
-        numCell.classList.remove("num-red");
-      }
+      numCell.classList.toggle("num-red", hasRed&&!hasCancel);
     }
 
-    function createTable(count) {
-      tableBody.innerHTML = "";
-      for (let i = 1; i <= count; i++) {
-        const row = document.createElement("tr");
-        const numCell = document.createElement("td");
-        numCell.textContent = i;
-        numCell.className = "number-cell";
-        numCell.style.cursor = "pointer";
-        numCell.addEventListener("click", () => {
-          document.getElementById("selectedPlayer").textContent = i;
-        });
-        row.appendChild(numCell);
+    function createTable(count){
+      tableBody.innerHTML="";
+      for(let i=1;i<=count;i++){
+        const r=document.createElement("tr");
+        const numCell=document.createElement("td");
+        numCell.className="number-cell"; numCell.style.cursor="pointer";
+        numCell.textContent=i;
+        numCell.onclick=()=>{ document.getElementById("selectedPlayer").textContent=i; };
+        r.appendChild(numCell);
 
-        const roleCell = document.createElement("td");
-        const select = document.createElement("select");
-        roleOptions.forEach(opt => {
-          const o = document.createElement("option");
-          o.value = opt;
-          o.textContent = opt;
-          select.appendChild(o);
+        const rc=document.createElement("td");
+        const sel=document.createElement("select");
+        roleOptions.forEach(o=>{
+          const opt=document.createElement("option");
+          opt.value=o; opt.textContent=o;
+          sel.appendChild(opt);
         });
-        roleCell.appendChild(select);
-        row.appendChild(roleCell);
+        rc.appendChild(sel);
+        r.appendChild(rc);
 
-        for (let night = 1; night <= nightCount; night++) {
-          const cell = document.createElement("td");
-          cell.className = "cell";
-          cell.dataset.row = i;
-          cell.dataset.col = `night${night}`;
-          cell.textContent = "";
-          row.appendChild(cell);
+        for(let n=1;n<=nightCount;n++){
+          const c=document.createElement("td");
+          c.className="cell"; c.dataset.row=i; c.dataset.col=`night${n}`; c.textContent="";
+          r.appendChild(c);
         }
-        tableBody.appendChild(row);
+        tableBody.appendChild(r);
       }
     }
 
     createTable(playerCount);
 
-    document.addEventListener("click", (e) => {
-      if (e.target.classList.contains("cell")) {
-        const cell = e.target;
-        let input = prompt("Введите действие: Х, М, В, Л, П, К, Ш, ХХХ. Удалить все — 0, удалить последнее — 00");
-        if (input === null) return;
-        input = input.toUpperCase().trim();
-        const row = cell.parentElement;
-
-        if (input === "0") {
-          cell.textContent = "";
-          cell.className = "cell";
-          updateRowHighlight(row);
-          updateNumberColor(row);
+    document.onclick = e => {
+      if(e.target.classList.contains("cell")){
+        const cell=e.target,
+              row=cell.parentElement;
+        let input=prompt("Введите: Х,М,В,Л,П,К,Ш,ХХХ. Удалить—0, последнее—00");
+        if(input===null)return;
+        input=input.toUpperCase().trim();
+        if(input==="0"){
+          cell.textContent=""; cell.className="cell";
+        } else if(input==="00"){
+          const parts=cell.textContent.split("\\");
+          parts.pop();
+          cell.textContent=parts.join("\\");
+          cell.className="cell";
+        } else if(!/^(Х|М|В|Л|П|К|Ш|ХХХ)$/.test(input)){
           return;
+        } else {
+          cell.textContent = cell.textContent ? cell.textContent + "\\" + input : input;
         }
-        if (input === "00") {
-          const current = cell.textContent;
-          if (current.includes("\\")) {
-            const parts = current.split("\\");
-            parts.pop();
-            cell.textContent = parts.join("\\");
-          } else {
-            cell.textContent = "";
-          }
-          cell.className = "cell";
-          const className = getCellClass(cell.textContent);
-          if (className) cell.classList.add(className);
-          updateRowHighlight(row);
-          updateNumberColor(row);
-          return;
-        }
-        if (!/^([ХМВЛПКСШ]{1,3})$/.test(input) && input !== "ХХХ") return;
-
-        const previous = cell.textContent;
-        const updated = previous ? previous + "\\" + input : input;
-        cell.textContent = updated;
-        cell.className = "cell";
-        const className = getCellClass(updated);
-        if (className) cell.classList.add(className);
+        cell.className="cell";
+        const cl=getCellClass(cell.textContent);
+        if(cl) cell.classList.add(cl);
         updateRowHighlight(row);
         updateNumberColor(row);
       }
-    });
+    };
 
-    function exportData() {
-      const data = {
-        count: playerCount,
-        rows: []
-      };
-      tableBody.querySelectorAll("tr").forEach((row, idx) => {
-        const cells = row.querySelectorAll("td");
-        const number = parseInt(cells[0].textContent);
-        const role = cells[1].querySelector("select").value;
-        const nights = Array.from(cells).slice(2).map(c => c.textContent);
-        data.rows.push({ number, role, nights });
+    function exportData(){
+      const data={count:playerCount,rows:[]};
+      document.querySelectorAll("#tableBody tr").forEach(r=>{
+        const tds=r.querySelectorAll("td");
+        const number=parseInt(tds[0].textContent);
+        const role=tds[1].querySelector("select").value;
+        const nights=Array.from(tds).slice(2).map(c=>c.textContent);
+        data.rows.push({number,role,nights});
       });
-      localStorage.setItem("mafia_table", JSON.stringify(data));
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const link = document.createElement("a");
-      const now = new Date();
-      const date = now.toISOString().split("T")[0];
-      const time = `${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}`;
-      link.href = URL.createObjectURL(blob);
-      link.download = `mafia_akm_${date}_${time}.json`;
+      localStorage.setItem("mafia_table",JSON.stringify(data));
+      const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+      const link=document.createElement("a");
+      const now=new Date();
+      const date=now.toISOString().split("T")[0];
+      const time=`${String(now.getHours()).padStart(2,'0')}-${String(now.getMinutes()).padStart(2,'0')}`;
+      link.href=URL.createObjectURL(blob);
+      link.download=`mafia_akm_${date}_${time}.json`;
       link.click();
     }
 
-    function importData(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const content = JSON.parse(e.target.result);
-        createTable(content.count);
-        content.rows.forEach((r, idx) => {
-          const row = tableBody.children[idx];
-          row.querySelector("select").value = r.role;
-          const nightCells = row.querySelectorAll(".cell");
-          r.nights.forEach((val, i) => {
-            const cell = nightCells[i];
-            cell.textContent = val;
-            cell.className = "cell";
-            const className = getCellClass(val);
-            if (className) cell.classList.add(className);
+    function importData(e){
+      const f=e.target.files[0];
+      if(!f)return;
+      const reader=new FileReader();
+      reader.onload=ev=>{
+        const data=JSON.parse(ev.target.result);
+        createTable(data.count);
+        data.rows.forEach((r,idx)=>{
+          const tr=tableBody.children[idx];
+          tr.querySelector("select").value=r.role;
+          r.nights.forEach((val,i)=>{
+            const c=tr.querySelectorAll(".cell")[i];
+            c.textContent=val;
+            c.className="cell";
+            const cl=getCellClass(val);
+            if(cl) c.classList.add(cl);
           });
-          updateRowHighlight(row);
-          updateNumberColor(row);
+          updateRowHighlight(tr);
+          updateNumberColor(tr);
         });
       };
-      reader.readAsText(file);
+      reader.readAsText(f);
     }
 
-    function resetTable() {
-      if (confirm("Вы уверены, что хотите сбросить таблицу?")) {
+    function resetTable(){
+      if(confirm("Очистить всю таблицу?")){
         localStorage.removeItem("mafia_table");
         createTable(playerCount);
       }
     }
 
-    window.addEventListener("beforeunload", exportData);
-
-    window.addEventListener("DOMContentLoaded", () => {
-      const saved = localStorage.getItem("mafia_table");
-      if (saved) {
-        const content = JSON.parse(saved);
-        createTable(content.count);
-        content.rows.forEach((r, idx) => {
-          const row = tableBody.children[idx];
-          row.querySelector("select").value = r.role;
-          const nightCells = row.querySelectorAll(".cell");
-          r.nights.forEach((val, i) => {
-            const cell = nightCells[i];
-            cell.textContent = val;
-            cell.className = "cell";
-            const className = getCellClass(val);
-            if (className) cell.classList.add(className);
-          });
-          updateRowHighlight(row);
-          updateNumberColor(row);
-        });
+    window.addEventListener("beforeunload",exportData);
+    window.addEventListener("DOMContentLoaded",()=>{
+      const saved=localStorage.getItem("mafia_table");
+      if(saved){
+        importData({target:{files:[new Blob([saved],{type:'application/json'})]}});
       }
     });
   </script>
