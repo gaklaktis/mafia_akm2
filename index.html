@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>Мафия — Таблица</title>
   <style>
-    body { font-family: sans-serif; margin: 0; padding: 10px; background-color: white; }
+    body { font-family: sans-serif; margin: 0; padding: 10px; background: white; }
     table { border-collapse: collapse; width: 100%; }
     td, th {
       border: 1px solid #ccc;
@@ -13,11 +13,15 @@
       min-width: 40px;
     }
     .cell { cursor: pointer; }
-    .red { background-color: #f88; }
-    .green { background-color: #8f8; }
-    .purple { background-color: #d8b6ff; }
-    .pink { background-color: #ffc0cb; }
+    .red { background-color: #f88 !important; }
+    .green { background-color: #8f8 !important; }
+    .purple { background-color: #d8b6ff !important; }
+    .pink { background-color: #ffc0cb !important; }
+    .gradient-pink-purple { background: linear-gradient(45deg, #ffc0cb 50%, #d8b6ff 50%); }
+    .gradient-pink-red { background: linear-gradient(45deg, #ffc0cb 50%, #f88 50%); }
+    .gradient-pink-green { background: linear-gradient(45deg, #ffc0cb 50%, #8f8 50%); }
     .num-red { background-color: #f55 !important; color: white; font-weight: bold; }
+    .full-red-row td { background-color: #f88 !important; }
     select {
       font-size: 14px;
       padding: 2px;
@@ -30,7 +34,7 @@
       border-radius: 8px;
     }
     #selectedPlayer {
-      font-size: 460px;
+      font-size: 490px;
       text-align: center;
       margin-top: 100px;
       font-weight: bold;
@@ -75,33 +79,66 @@
     const tableBody = document.getElementById("tableBody");
     const roleOptions = ["", "П", "Л", "Х", "Хд", "В", "Ш", "М", "К", "С"];
 
-    const getStrongestColor = (text) => {
-      text = text.toUpperCase();
-      if (text.includes("Л")) return "purple";
-      if (text.includes("В")) return "green";
-      if (text.includes("Х") || text.includes("М")) return "red";
-      if (text.includes("П")) return "pink";
-      return "";
-    };
+    function getCellClass(text) {
+      const t = text.toUpperCase();
 
-    const updateNumberCellColor = (row) => {
+      if (t.includes("ХХХ")) return "red";
+
+      if (t.includes("П") && t.includes("Л")) return "gradient-pink-purple";
+      if (t.includes("П") && (t.includes("Х") || t.includes("М"))) return "gradient-pink-red";
+      if (t.includes("П") && t.includes("В")) return "gradient-pink-green";
+
+      if (t.includes("Л")) return "purple";
+      if (t.includes("В")) return "green";
+      if (t.includes("Х") || t.includes("М")) return "red";
+      if (t.includes("П")) return "pink";
+
+      return "";
+    }
+
+    function updateRowHighlight(row) {
+      const cells = row.querySelectorAll(".cell");
+      let redFound = false;
+
+      cells.forEach(cell => {
+        const text = cell.textContent.toUpperCase();
+        const className = getCellClass(text);
+        if (className === "red" || className === "gradient-pink-red" || text.includes("ХХХ")) {
+          redFound = true;
+        }
+      });
+
+      if (redFound) {
+        row.classList.add("full-red-row");
+      } else {
+        row.classList.remove("full-red-row");
+      }
+    }
+
+    function updateNumberColor(row) {
       const nightCells = Array.from(row.querySelectorAll(".cell"));
       const numCell = row.querySelector(".number-cell");
 
       let hasRed = false;
-      let hasGreenOrPurple = false;
+      let hasCancel = false;
+
       for (const cell of nightCells) {
         const text = cell.textContent.toUpperCase();
-        if (text.includes("Л")) hasGreenOrPurple = true;
-        if (text.includes("В")) hasGreenOrPurple = true;
-        if (text.includes("Х") || text.includes("М")) hasRed = true;
+        const className = getCellClass(text);
+        if (className === "purple" || className === "green" || className.startsWith("gradient-pink-")) {
+          hasCancel = true;
+        }
+        if (className === "red" || text.includes("ХХХ")) {
+          hasRed = true;
+        }
       }
-      if (hasRed && !hasGreenOrPurple) {
+
+      if (hasRed && !hasCancel) {
         numCell.classList.add("num-red");
       } else {
         numCell.classList.remove("num-red");
       }
-    };
+    }
 
     for (let i = 1; i <= playerCount; i++) {
       const row = document.createElement("tr");
@@ -141,7 +178,7 @@
     document.addEventListener("click", (e) => {
       if (e.target.classList.contains("cell")) {
         const cell = e.target;
-        let input = prompt("Введите действие: Х, М, В, Л, П, К, Ш. Удалить все — 0, удалить последнее — 00");
+        let input = prompt("Введите действие: Х, М, В, Л, П, К, Ш, ХХХ. Удалить все — 0, удалить последнее — 00");
         if (input === null) return;
 
         input = input.toUpperCase().trim();
@@ -150,7 +187,8 @@
         if (input === "0") {
           cell.textContent = "";
           cell.className = "cell";
-          updateNumberCellColor(row);
+          updateRowHighlight(row);
+          updateNumberColor(row);
           return;
         }
 
@@ -164,51 +202,40 @@
             cell.textContent = "";
           }
           cell.className = "cell";
-          const color = getStrongestColor(cell.textContent);
-          if (color) cell.classList.add(color);
-          updateNumberCellColor(row);
+          const className = getCellClass(cell.textContent);
+          if (className) cell.classList.add(className);
+          updateRowHighlight(row);
+          updateNumberColor(row);
           return;
         }
 
-        if (!/^[ХМВЛПКШ]$/.test(input)) return;
+        if (!/^(Х|М|В|Л|П|К|Ш|ХХХ)$/.test(input)) return;
 
         const previous = cell.textContent;
         const updated = previous ? previous + "\\" + input : input;
         cell.textContent = updated;
 
         cell.className = "cell";
-        const color = getStrongestColor(updated);
-        if (color) cell.classList.add(color);
+        const className = getCellClass(updated);
+        if (className) cell.classList.add(className);
 
-        updateNumberCellColor(row);
+        updateRowHighlight(row);
+        updateNumberColor(row);
       }
     });
 
-    // Защита от "черного экрана" при сворачивании/разворачивании
+    // Защита от черного экрана
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) {
         document.body.style.backgroundColor = "white";
-        const rows = document.querySelectorAll("#tableBody tr");
-        rows.forEach(row => {
-          const nightCells = Array.from(row.querySelectorAll(".cell"));
-          const numCell = row.querySelector(".number-cell");
-
-          let hasRed = false;
-          let hasGreenOrPurple = false;
-          for (const cell of nightCells) {
-            const text = cell.textContent.toUpperCase();
-            if (text.includes("Л")) hasGreenOrPurple = true;
-            if (text.includes("В")) hasGreenOrPurple = true;
-            if (text.includes("Х") || text.includes("М")) hasRed = true;
-          }
-          if (hasRed && !hasGreenOrPurple) {
-            numCell.classList.add("num-red");
-          } else {
-            numCell.classList.remove("num-red");
-          }
-        });
+        document.documentElement.style.backgroundColor = "white";
+        const table = document.getElementById("mafiaTable");
+        const clone = table.cloneNode(true);
+        table.parentNode.replaceChild(clone, table);
+        location.reload();
       }
     });
   </script>
 </body>
 </html>
+
