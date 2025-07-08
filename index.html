@@ -225,16 +225,13 @@
     });
 
     // Защита от черного экрана
-    document.addEventListener("visibilitychange", () => {
-      if (!document.hidden) {
-        document.body.style.backgroundColor = "white";
-        document.documentElement.style.backgroundColor = "white";
-        const table = document.getElementById("mafiaTable");
-        const clone = table.cloneNode(true);
-        table.parentNode.replaceChild(clone, table);
-        location.reload();
-      }
-    });
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) {
+    document.body.style.backgroundColor = "white";
+    document.documentElement.style.backgroundColor = "white";
+    // Больше ничего не делаем, просто восстанавливаем фон
+  }
+});
   </script>
 </body>
 </html>
