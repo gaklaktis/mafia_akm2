@@ -17,8 +17,9 @@
     .green { background-color: #8f8; }
     .purple { background-color: #d8b6ff; }
     .pink { background-color: #ffc0cb; }
+    .num-red { background-color: #f55 !important; color: white; font-weight: bold; }
     select {
-      font-size: 12px;
+      font-size: 14px;
       padding: 2px;
       width: 100%;
     }
@@ -28,13 +29,20 @@
       margin-bottom: 10px;
       border-radius: 8px;
     }
+    #selectedPlayer {
+      font-size: 280px;
+      text-align: center;
+      margin-top: 30px;
+      font-weight: bold;
+      color: #444;
+    }
   </style>
 </head>
 <body>
   <h3>Таблица ночных действий</h3>
   <div class="legend">
     <strong>Подсказка по ролям:</strong><br>
-    П — путана, Л — любовница, Х — мафия, Хд — дон, В — доктор, Ш — шериф, М — маньяк, К — камикадзе, С — мститель
+    Х — мафия, Хд — дон, Л — любовница, В — доктор, Ш — шериф, М — маньяк, К — камикадзе, С — мститель, П — путана
   </div>
 
   <table id="mafiaTable">
@@ -42,19 +50,18 @@
       <tr id="headerRow">
         <th>#</th>
         <th>Роль</th>
-        <!-- Ночи -->
       </tr>
     </thead>
-    <tbody id="tableBody">
-      <!-- Строки -->
-    </tbody>
+    <tbody id="tableBody"></tbody>
   </table>
+
+  <div id="selectedPlayer"></div>
 
   <script>
     const params = new URLSearchParams(window.location.search);
     const countParam = params.get("count");
     const playerCount = (!isNaN(parseInt(countParam)) && parseInt(countParam) >= 1) ? parseInt(countParam) : 10;
-    const nightCount = 8;
+    const nightCount = 7;
 
     const headerRow = document.getElementById("headerRow");
     for (let n = 1; n <= nightCount; n++) {
@@ -64,6 +71,7 @@
     }
 
     const tableBody = document.getElementById("tableBody");
+    const roleOptions = ["", "Х", "Хд", "Л", "В", "Ш", "М", "К", "С", "П"];
 
     const getStrongestColor = (text) => {
       text = text.toUpperCase();
@@ -74,17 +82,30 @@
       return "";
     };
 
-    const roleOptions = ["", "Х", "Хд", "Л", "В", "Ш", "М", "К", "С", "П"];
+    const updateNumberCellColor = (row, rowIndex) => {
+      const nightCells = Array.from(row.querySelectorAll(".cell"));
+      const numCell = row.querySelector(".number-cell");
+      const text = nightCells.map(cell => cell.textContent.toUpperCase()).join("");
+      if (text.includes("Х") || text.includes("М")) {
+        numCell.classList.add("num-red");
+      } else {
+        numCell.classList.remove("num-red");
+      }
+    };
 
     for (let i = 1; i <= playerCount; i++) {
       const row = document.createElement("tr");
 
-      // Номер игрока
       const numCell = document.createElement("td");
       numCell.textContent = i;
+      numCell.className = "number-cell";
+      numCell.style.cursor = "pointer";
+      numCell.addEventListener("click", () => {
+        const display = document.getElementById("selectedPlayer");
+        display.textContent = i;
+      });
       row.appendChild(numCell);
 
-      // Выбор роли
       const roleCell = document.createElement("td");
       const select = document.createElement("select");
       roleOptions.forEach(opt => {
@@ -96,7 +117,6 @@
       roleCell.appendChild(select);
       row.appendChild(roleCell);
 
-      // Ячейки ночей
       for (let night = 1; night <= nightCount; night++) {
         const cell = document.createElement("td");
         cell.className = "cell";
@@ -109,35 +129,54 @@
       tableBody.appendChild(row);
     }
 
-    // Обработка клика
     document.addEventListener("click", (e) => {
       if (e.target.classList.contains("cell")) {
         const cell = e.target;
-        let input = prompt("Введите действие: Х, М, В, Л, П, К. Чтобы удалить — введите 0");
+        let input = prompt("Введите действие: Х, М, В, Л, П, К. Удалить все — 0, удалить последнее — 00");
         if (input === null) return;
 
         input = input.toUpperCase().trim();
 
-        // Удаление действий
+        const row = cell.parentElement;
+        const rowIndex = parseInt(cell.dataset.row);
+
         if (input === "0") {
           cell.textContent = "";
           cell.className = "cell";
+          updateNumberCellColor(row, rowIndex);
           return;
         }
 
-        // Проверка допустимого символа
+        if (input === "00") {
+          const current = cell.textContent;
+          if (current.includes("\\")) {
+            const parts = current.split("\\");
+            parts.pop();
+            cell.textContent = parts.join("\\");
+          } else {
+            cell.textContent = "";
+          }
+          cell.className = "cell";
+          const color = getStrongestColor(cell.textContent);
+          if (color) cell.classList.add(color);
+          updateNumberCellColor(row, rowIndex);
+          return;
+        }
+
         if (!/^[ХМВЛПК]$/.test(input)) return;
 
         const previous = cell.textContent;
         const updated = previous ? previous + "\\" + input : input;
         cell.textContent = updated;
 
-        // Сброс цвета
         cell.className = "cell";
         const color = getStrongestColor(updated);
         if (color) cell.classList.add(color);
+
+        updateNumberCellColor(row, rowIndex);
       }
     });
   </script>
 </body>
 </html>
+
