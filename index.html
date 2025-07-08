@@ -24,7 +24,6 @@
       color: red;
       padding-bottom: 600px;
     }
-    /* Стили для кнопки загрузки */
     #loadFile {
       display: none;
     }
@@ -73,33 +72,34 @@
   const headerRow = document.getElementById("headerRow");
   const tableBody = document.getElementById("tableBody");
 
-  // Добавляем заголовки для ночей
   for (let n = 1; n <= nightCount; n++) {
     const th = document.createElement("th");
     th.textContent = `Ночь ${n}`;
     headerRow.appendChild(th);
   }
 
-  const roleOptions = ["", "П","Л","Х","Хд","В","Ш","М","К","С"];
+  const roleOptions = ["", "П", "Л", "Х", "Хд", "В", "Ш", "М", "К", "С"];
 
   function getCellClass(text) {
     const t = text.toUpperCase();
-    if (t.includes("ХХХ")) return "red";
+
+    if (t.includes("ХХХ")) return "red"; // приоритет 1
+
+    if (t.includes("П") && (t.includes("Х") || t.includes("М"))) return "gradient-pink-red"; // приоритет 2
+
     if (t.includes("П") && t.includes("Л")) return "gradient-pink-purple";
     if (t.includes("П") && t.includes("В")) return "gradient-pink-green";
-    if (t.includes("П") && (t.includes("Х") || t.includes("М"))) return "gradient-pink-red";
     if (t.includes("Л")) return "purple";
     if (t.includes("В")) return "green";
     if (t.includes("Х") || t.includes("М")) return "red";
     if (t.includes("П")) return "pink";
+
     return "";
   }
 
-  // Обновление цвета номера игрока и красной клетки по условию
   function updateRowColors(row) {
     const cells = [...row.querySelectorAll(".cell")];
     const numCell = row.querySelector("td");
-    // Сбрасываем все красные классы
     numCell.classList.remove("num-red");
     cells.forEach(c => c.classList.remove("red"));
 
@@ -109,7 +109,7 @@
       if (val.includes("ХХХ")) {
         numCell.classList.add("num-red");
         cells[i].classList.add("red");
-        return; // сразу красим только этот столбец и номер, выходим
+        return;
       }
 
       const hasKill = val.includes("Х") || val.includes("М");
@@ -118,7 +118,7 @@
       if (hasKill && !hasCancel) {
         numCell.classList.add("num-red");
         cells[i].classList.add("red");
-        return; // красим и выходим
+        return;
       }
     }
   }
@@ -177,17 +177,14 @@
         cell.textContent = cell.textContent ? cell.textContent + "\\" + input : input;
       }
 
-      // Обновляем стили ячейки
       cell.className = "cell";
       const style = getCellClass(cell.textContent);
       if (style) cell.classList.add(style);
 
-      // Обновляем цвет номера и ячейки
       updateRowColors(row);
     }
   });
 
-  // Экспорт данных в файл и localStorage
   function exportData() {
     const data = { count: playerCount, rows: [] };
     tableBody.querySelectorAll("tr").forEach(row => {
@@ -209,7 +206,6 @@
     localStorage.setItem("mafia_table", JSON.stringify(data));
   }
 
-  // Импорт из файла
   function importData(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -232,11 +228,9 @@
       });
     };
     reader.readAsText(file);
-    // Сбрасываем value, чтобы можно было загрузить один и тот же файл повторно
     e.target.value = "";
   }
 
-  // Сброс таблицы
   function resetTable() {
     if (confirm("Очистить всю таблицу?")) {
       localStorage.removeItem("mafia_table");
@@ -244,7 +238,6 @@
     }
   }
 
-  // События
   window.addEventListener("beforeunload", exportData);
 
   window.addEventListener("DOMContentLoaded", () => {
@@ -268,7 +261,6 @@
     }
   });
 
-  // Обработчик кнопки загрузки файла
   document.getElementById("loadFile").addEventListener("change", importData);
 </script>
 </body>
