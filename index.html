@@ -19,12 +19,13 @@
     .full-red-row td { background-color: #f88 !important; }
     select { font-size: 14px; padding: 2px; width: 100%; }
     .legend { background: #f0f0f0; padding: 10px; margin-bottom: 10px; border-radius: 8px; }
-    #selectedPlayer { font-size: 390px; text-align: center; margin-top: 100px; font-weight: bold; color: red; padding-top: 400px; padding-bottom: 600px; }
+    #selectedPlayer { font-size: 390px; text-align: center; margin-top: 200px; font-weight: bold; color: red; padding-top: 400px; padding-bottom: 600px; }
     .actions { margin-bottom: 10px; }
   </style>
 </head>
 <body>
   <h3>Таблица ночных действий</h3>
+
   <div class="legend">
     <strong>Подсказка по ролям:</strong><br />
     П — путана, Л — любовница, Х — мафия, Хд — дон, В — доктор, Ш — шериф, М — маньяк, К — камикадзе, С — мститель
@@ -32,7 +33,11 @@
 
   <div class="actions">
     <button onclick="exportData()">💾 Сохранить</button>
-    <input type="file" id="loadFile" accept=".json" onchange="importData(event)" />
+    <label style="display:inline-block; padding:6px 12px; background:#eee; border:1px solid #ccc; cursor:pointer;">
+      📂 Загрузить
+      <input type="file" id="loadFile" accept=".json" onchange="importData(event)" style="display:none;" />
+    </label>
+    <button onclick="resetTable()">♻️ Сброс</button>
   </div>
 
   <table id="mafiaTable">
@@ -52,8 +57,8 @@
     const countParam = params.get("count");
     const playerCount = (!isNaN(parseInt(countParam)) && parseInt(countParam) >= 1) ? parseInt(countParam) : 10;
     const nightCount = 9;
-
     const roleOptions = ["", "П", "Л", "Х", "Хд", "В", "Ш", "М", "К", "С"];
+
     const headerRow = document.getElementById("headerRow");
     const tableBody = document.getElementById("tableBody");
 
@@ -184,7 +189,7 @@
           updateNumberColor(row);
           return;
         }
-        if (!/^(Х|М|В|Л|П|К|Ш|ХХХ)$/.test(input)) return;
+        if (!/^([ХМВЛПКСШ]{1,3})$/.test(input) && input !== "ХХХ") return;
 
         const previous = cell.textContent;
         const updated = previous ? previous + "\\" + input : input;
@@ -212,9 +217,11 @@
       localStorage.setItem("mafia_table", JSON.stringify(data));
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const link = document.createElement("a");
-      const date = new Date().toISOString().split("T")[0];
+      const now = new Date();
+      const date = now.toISOString().split("T")[0];
+      const time = `${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}`;
       link.href = URL.createObjectURL(blob);
-      link.download = `${date}_mafia_akm_bot.json`;
+      link.download = `mafia_akm_${date}_${time}.json`;
       link.click();
     }
 
@@ -243,6 +250,13 @@
       reader.readAsText(file);
     }
 
+    function resetTable() {
+      if (confirm("Вы уверены, что хотите сбросить таблицу?")) {
+        localStorage.removeItem("mafia_table");
+        createTable(playerCount);
+      }
+    }
+
     window.addEventListener("beforeunload", exportData);
 
     window.addEventListener("DOMContentLoaded", () => {
@@ -269,4 +283,3 @@
   </script>
 </body>
 </html>
-
