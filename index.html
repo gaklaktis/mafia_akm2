@@ -76,6 +76,11 @@
 
   const roleOptions = ["", "П", "Л", "Х", "Хд", "В", "Ш", "М", "К", "С"];
 
+  function resetColorClasses(cell) {
+    cell.classList.remove("red", "green", "purple", "pink",
+      "gradient-pink-purple", "gradient-pink-green", "gradient-pink-red");
+  }
+
   function getCellClass(text) {
     const parts = text.toUpperCase().split("\\").map(p => p.trim());
     const has = r => parts.includes(r);
@@ -87,7 +92,6 @@
     const hasM = has("М");
     const hasXXX = has("ХХХ");
 
-    // приоритеты
     if (hasXXX) return "red";
     if (hasP && hasL) return "gradient-pink-purple";
     if (hasP && hasV) return "gradient-pink-green";
@@ -176,6 +180,7 @@
         cell.textContent = cell.textContent ? cell.textContent + "\\" + input : input;
       }
 
+      resetColorClasses(cell);
       cell.className = "cell";
       const style = getCellClass(cell.textContent);
       if (style) cell.classList.add(style);
@@ -219,6 +224,7 @@
         r.nights.forEach((val, j) => {
           const c = cells[j];
           c.textContent = val;
+          resetColorClasses(c);
           c.className = "cell";
           const style = getCellClass(val);
           if (style) c.classList.add(style);
@@ -251,6 +257,7 @@
         r.nights.forEach((val, j) => {
           const c = cells[j];
           c.textContent = val;
+          resetColorClasses(c);
           c.className = "cell";
           const style = getCellClass(val);
           if (style) c.classList.add(style);
