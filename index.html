@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>Мафия — Таблица</title>
   <style>
-    body { font-family: sans-serif; margin: 0; padding: 10px; }
+    body { font-family: sans-serif; margin: 0; padding: 10px; background-color: white; }
     table { border-collapse: collapse; width: 100%; }
     td, th {
       border: 1px solid #ccc;
@@ -36,7 +36,7 @@
       font-weight: bold;
       color: red;
       padding-top: 400px;
-      padding-bottom: 500px;
+      padding-bottom: 400px;
     }
   </style>
 </head>
@@ -75,7 +75,6 @@
     const tableBody = document.getElementById("tableBody");
     const roleOptions = ["", "П", "Л", "Х", "Хд", "В", "Ш", "М", "К", "С"];
 
-    // Определяем цвет ячейки по приоритету
     const getStrongestColor = (text) => {
       text = text.toUpperCase();
       if (text.includes("Л")) return "purple";
@@ -85,23 +84,17 @@
       return "";
     };
 
-    // Обновление цвета номера игрока
     const updateNumberCellColor = (row) => {
       const nightCells = Array.from(row.querySelectorAll(".cell"));
       const numCell = row.querySelector(".number-cell");
 
-      // Проверяем по каждой ночи: если есть красная ячейка и нет зеленой/фиолетовой, номер красный
       let hasRed = false;
       let hasGreenOrPurple = false;
       for (const cell of nightCells) {
         const text = cell.textContent.toUpperCase();
-        const color = getStrongestColor(text);
-        if (color === "purple" || color === "green") {
-          hasGreenOrPurple = true;
-        }
-        if (color === "red") {
-          hasRed = true;
-        }
+        if (text.includes("Л")) hasGreenOrPurple = true;
+        if (text.includes("В")) hasGreenOrPurple = true;
+        if (text.includes("Х") || text.includes("М")) hasRed = true;
       }
       if (hasRed && !hasGreenOrPurple) {
         numCell.classList.add("num-red");
@@ -110,11 +103,9 @@
       }
     };
 
-    // Создаём таблицу
     for (let i = 1; i <= playerCount; i++) {
       const row = document.createElement("tr");
 
-      // Номер игрока
       const numCell = document.createElement("td");
       numCell.textContent = i;
       numCell.className = "number-cell";
@@ -124,7 +115,6 @@
       });
       row.appendChild(numCell);
 
-      // Выбор роли
       const roleCell = document.createElement("td");
       const select = document.createElement("select");
       roleOptions.forEach(opt => {
@@ -136,7 +126,6 @@
       roleCell.appendChild(select);
       row.appendChild(roleCell);
 
-      // Ночные действия
       for (let night = 1; night <= nightCount; night++) {
         const cell = document.createElement("td");
         cell.className = "cell";
@@ -192,6 +181,32 @@
         if (color) cell.classList.add(color);
 
         updateNumberCellColor(row);
+      }
+    });
+
+    // Защита от "черного экрана" при сворачивании/разворачивании
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) {
+        document.body.style.backgroundColor = "white";
+        const rows = document.querySelectorAll("#tableBody tr");
+        rows.forEach(row => {
+          const nightCells = Array.from(row.querySelectorAll(".cell"));
+          const numCell = row.querySelector(".number-cell");
+
+          let hasRed = false;
+          let hasGreenOrPurple = false;
+          for (const cell of nightCells) {
+            const text = cell.textContent.toUpperCase();
+            if (text.includes("Л")) hasGreenOrPurple = true;
+            if (text.includes("В")) hasGreenOrPurple = true;
+            if (text.includes("Х") || text.includes("М")) hasRed = true;
+          }
+          if (hasRed && !hasGreenOrPurple) {
+            numCell.classList.add("num-red");
+          } else {
+            numCell.classList.remove("num-red");
+          }
+        });
       }
     });
   </script>
