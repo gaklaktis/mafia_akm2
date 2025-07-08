@@ -24,6 +24,7 @@
       color: red;
       padding-bottom: 600px;
     }
+    /* Стили для кнопки загрузки */
     #loadFile {
       display: none;
     }
@@ -72,39 +73,33 @@
   const headerRow = document.getElementById("headerRow");
   const tableBody = document.getElementById("tableBody");
 
+  // Добавляем заголовки для ночей
   for (let n = 1; n <= nightCount; n++) {
     const th = document.createElement("th");
     th.textContent = `Ночь ${n}`;
     headerRow.appendChild(th);
   }
 
-  const roleOptions = ["", "П", "Л", "Х", "Хд", "В", "Ш", "М", "К", "С"];
+  const roleOptions = ["", "П","Л","Х","Хд","В","Ш","М","К","С"];
 
-function getCellClass(text) {
-  const parts = text.toUpperCase().split("\\").map(p => p.trim());
+  function getCellClass(text) {
+    const t = text.toUpperCase();
+    if (t.includes("ХХХ")) return "red";
+    if (t.includes("П") && t.includes("Л")) return "gradient-pink-purple";
+    if (t.includes("П") && t.includes("В")) return "gradient-pink-green";
+    if (t.includes("П") && (t.includes("Х") || t.includes("М"))) return "gradient-pink-red";
+    if (t.includes("Л")) return "purple";
+    if (t.includes("В")) return "green";
+    if (t.includes("Х") || t.includes("М")) return "red";
+    if (t.includes("П")) return "pink";
+    return "";
+  }
 
-  const hasP = parts.includes("П");
-  const hasL = parts.includes("Л");
-  const hasV = parts.includes("В");
-  const hasX = parts.includes("Х");
-  const hasM = parts.includes("М");
-  const hasXXX = parts.includes("ХХХ");
-
-  if (hasXXX) return "red";
-  if (hasP && (hasX || hasM)) return "gradient-pink-red";
-  if (hasP && hasL) return "gradient-pink-purple";
-  if (hasP && hasV) return "gradient-pink-green";
-  if (hasL) return "purple";
-  if (hasV) return "green";
-  if (hasX || hasM) return "red";
-  if (hasP) return "pink";
-
-  return "";
-}
-
+  // Обновление цвета номера игрока и красной клетки по условию
   function updateRowColors(row) {
     const cells = [...row.querySelectorAll(".cell")];
     const numCell = row.querySelector("td");
+    // Сбрасываем все красные классы
     numCell.classList.remove("num-red");
     cells.forEach(c => c.classList.remove("red"));
 
@@ -114,7 +109,7 @@ function getCellClass(text) {
       if (val.includes("ХХХ")) {
         numCell.classList.add("num-red");
         cells[i].classList.add("red");
-        return;
+        return; // сразу красим только этот столбец и номер, выходим
       }
 
       const hasKill = val.includes("Х") || val.includes("М");
@@ -123,7 +118,7 @@ function getCellClass(text) {
       if (hasKill && !hasCancel) {
         numCell.classList.add("num-red");
         cells[i].classList.add("red");
-        return;
+        return; // красим и выходим
       }
     }
   }
@@ -182,14 +177,17 @@ function getCellClass(text) {
         cell.textContent = cell.textContent ? cell.textContent + "\\" + input : input;
       }
 
+      // Обновляем стили ячейки
       cell.className = "cell";
       const style = getCellClass(cell.textContent);
       if (style) cell.classList.add(style);
 
+      // Обновляем цвет номера и ячейки
       updateRowColors(row);
     }
   });
 
+  // Экспорт данных в файл и localStorage
   function exportData() {
     const data = { count: playerCount, rows: [] };
     tableBody.querySelectorAll("tr").forEach(row => {
@@ -211,6 +209,7 @@ function getCellClass(text) {
     localStorage.setItem("mafia_table", JSON.stringify(data));
   }
 
+  // Импорт из файла
   function importData(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -233,9 +232,11 @@ function getCellClass(text) {
       });
     };
     reader.readAsText(file);
+    // Сбрасываем value, чтобы можно было загрузить один и тот же файл повторно
     e.target.value = "";
   }
 
+  // Сброс таблицы
   function resetTable() {
     if (confirm("Очистить всю таблицу?")) {
       localStorage.removeItem("mafia_table");
@@ -243,6 +244,7 @@ function getCellClass(text) {
     }
   }
 
+  // События
   window.addEventListener("beforeunload", exportData);
 
   window.addEventListener("DOMContentLoaded", () => {
@@ -266,6 +268,7 @@ function getCellClass(text) {
     }
   });
 
+  // Обработчик кнопки загрузки файла
   document.getElementById("loadFile").addEventListener("change", importData);
 </script>
 </body>
