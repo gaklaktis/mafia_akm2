@@ -80,22 +80,27 @@
 
   const roleOptions = ["", "П", "Л", "Х", "Хд", "В", "Ш", "М", "К", "С"];
 
-  function getCellClass(text) {
-    const t = text.toUpperCase();
+function getCellClass(text) {
+  const parts = text.toUpperCase().split("\\").map(p => p.trim());
 
-    if (t.includes("ХХХ")) return "red"; // приоритет 1
+  const hasP = parts.includes("П");
+  const hasL = parts.includes("Л");
+  const hasV = parts.includes("В");
+  const hasX = parts.includes("Х");
+  const hasM = parts.includes("М");
+  const hasXXX = parts.includes("ХХХ");
 
-    if (t.includes("П") && (t.includes("Х") || t.includes("М"))) return "gradient-pink-red"; // приоритет 2
+  if (hasXXX) return "red";
+  if (hasP && (hasX || hasM)) return "gradient-pink-red";
+  if (hasP && hasL) return "gradient-pink-purple";
+  if (hasP && hasV) return "gradient-pink-green";
+  if (hasL) return "purple";
+  if (hasV) return "green";
+  if (hasX || hasM) return "red";
+  if (hasP) return "pink";
 
-    if (t.includes("П") && t.includes("Л")) return "gradient-pink-purple";
-    if (t.includes("П") && t.includes("В")) return "gradient-pink-green";
-    if (t.includes("Л")) return "purple";
-    if (t.includes("В")) return "green";
-    if (t.includes("Х") || t.includes("М")) return "red";
-    if (t.includes("П")) return "pink";
-
-    return "";
-  }
+  return "";
+}
 
   function updateRowColors(row) {
     const cells = [...row.querySelectorAll(".cell")];
