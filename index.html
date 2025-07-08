@@ -82,39 +82,60 @@
       return "";
     }
 
-    function updateRowHighlight(row){
+    function updateRowHighlight(row) {
       const cells = [...row.querySelectorAll(".cell")];
-      let redFound=false, cancelFound=false, purpleFound=false;
+      let redFound = false;
 
-      let lastCancelIdx=-1;
+      for (let i = 0; i < cells.length; i++) {
+        const text = cells[i].textContent.toUpperCase();
 
-      cells.forEach((cell,i)=>{
-        const t = cell.textContent.toUpperCase();
-        if(t.includes("Л") || t.includes("В")) { cancelFound=true; lastCancelIdx=i; }
-      });
-
-      cells.forEach((cell,i)=>{
-        const t = cell.textContent.toUpperCase();
-        if(t.includes("ХХХ")) redFound = true;
-        if((t.includes("Х") || t.includes("М")) && i > lastCancelIdx && !cancelFound) {
+        if (text.includes("ХХХ")) {
           redFound = true;
+          break;
         }
-      });
+
+        const nextCell = cells[i + 1];
+        if (nextCell) {
+          const nextText = nextCell.textContent.toUpperCase();
+          const nextHasKill = nextText.includes("Х") || nextText.includes("М");
+          const nextHasCancel = nextText.includes("Л") || nextText.includes("В");
+          const currHasCancel = text.includes("Л") || text.includes("В");
+
+          if (nextHasKill && !nextHasCancel && !currHasCancel) {
+            redFound = true;
+            break;
+          }
+        }
+      }
 
       row.classList.toggle("full-red-row", redFound);
     }
 
-    function updateNumberColor(row){
-      const cells=[...row.querySelectorAll(".cell")];
+    function updateNumberColor(row) {
+      const cells = [...row.querySelectorAll(".cell")];
       const numCell = row.querySelector(".number-cell");
-      let hasRed=false, hasCancel=false;
+      let hasRed = false;
 
-      cells.forEach(cell=>{
-        const t = cell.textContent.toUpperCase();
-        if(t.includes("Л")) hasCancel=true;
-        if(t.includes("ХХХ")) hasRed=true;
-        if((t.includes("Х")||t.includes("М")) && !hasCancel) hasRed=true;
-      });
+      for (let i = 0; i < cells.length; i++) {
+        const text = cells[i].textContent.toUpperCase();
+        if (text.includes("ХХХ")) {
+          hasRed = true;
+          break;
+        }
+
+        const next = cells[i + 1];
+        if (next) {
+          const nextText = next.textContent.toUpperCase();
+          const nextHasKill = nextText.includes("Х") || nextText.includes("М");
+          const nextHasCancel = nextText.includes("Л") || nextText.includes("В");
+          const currHasCancel = text.includes("Л") || text.includes("В");
+
+          if (nextHasKill && !nextHasCancel && !currHasCancel) {
+            hasRed = true;
+            break;
+          }
+        }
+      }
 
       numCell.classList.toggle("num-red", hasRed);
     }
@@ -228,9 +249,9 @@
       }
     }
 
-    window.addEventListener("beforeunload",exportData);
-    window.addEventListener("DOMContentLoaded",()=>{
-      const saved=localStorage.getItem("mafia_table");
+    window.addEventListener("beforeunload", exportData);
+    window.addEventListener("DOMContentLoaded", ()=>{
+      const saved = localStorage.getItem("mafia_table");
       if(saved){
         importData({target:{files:[new Blob([saved],{type:'application/json'})]}});
       }
