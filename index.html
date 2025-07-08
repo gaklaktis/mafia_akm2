@@ -111,16 +111,29 @@
 
     for (let i = 0; i < cells.length; i++) {
       const val = cells[i].textContent.toUpperCase();
-      if (val.includes("ХХХ")) {
+      const parts = val.split("\\").map(p => p.trim());
+      const hasKill = parts.includes("Х") || parts.includes("М");
+      const hasCancel = parts.includes("Л") || parts.includes("В");
+      const hasXXX = parts.includes("ХХХ");
+
+      if (hasXXX) {
         numCell.classList.add("num-red");
+        resetColorClasses(cells[i]);
         cells[i].classList.add("red");
         return;
       }
-      const hasKill = val.includes("Х") || val.includes("М");
-      const hasCancel = val.includes("Л") || val.includes("В");
+
       if (hasKill && !hasCancel) {
         numCell.classList.add("num-red");
-        cells[i].classList.add("red");
+
+        const style = getCellClass(val);
+        if (style.startsWith("gradient-pink-")) {
+          resetColorClasses(cells[i]);
+          cells[i].classList.add(style);
+        } else {
+          resetColorClasses(cells[i]);
+          cells[i].classList.add("red");
+        }
         return;
       }
     }
