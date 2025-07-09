@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Мафия — Таблица</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     body { font-family: sans-serif; padding: 10px; background: white; }
     table { border-collapse: collapse; width: 100%; }
@@ -51,6 +52,7 @@
   <label for="loadFile">📂 Загрузить</label>
   <input type="file" id="loadFile" accept=".json" />
   <button onclick="resetTable()">♻️ Сброс</button>
+  <button onclick="exportToExcel()">📤 В Excel</button>
 </div>
 
 <table id="mafiaTable">
@@ -125,7 +127,6 @@
 
       if (hasKill && !hasCancel) {
         numCell.classList.add("num-red");
-
         const style = getCellClass(val);
         resetColorClasses(cells[i]);
         if (style.startsWith("gradient-pink-")) {
@@ -219,7 +220,7 @@
         const date = now.toISOString().split("T")[0];
         const time = `${now.getHours()}-${now.getMinutes()}`;
         const fileHandle = await window.showSaveFilePicker({
-          suggestedName: `mafia_akm_${date}_${time}.json`,
+          suggestedName: `mafia_${date}_${time}.json`,
           types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }]
         });
         const writable = await fileHandle.createWritable();
@@ -228,14 +229,15 @@
         alert("Файл сохранён успешно ✅");
         return;
       } catch (err) {
-        alert("Не удалось сохранить: " + err.message);
-        console.warn(err);
+        if (err.name !== "AbortError") {
+          alert("Не удалось сохранить: " + err.message);
+        }
       }
     }
 
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `mafia_akm.json`;
+    link.download = `mafia_data.json`;
     link.click();
   }
 
@@ -272,7 +274,32 @@
     }
   }
 
-  window.addEventListener("beforeunload", exportData);
+  function exportToExcel() {
+    const wb = XLSX.utils.book_new();
+    const data = [];
+
+    const header = ["#", "Роль"];
+    for (let i = 1; i <= nightCount; i++) {
+      header.push(`Ночь ${i}`);
+    }
+    data.push(header);
+
+    tableBody.querySelectorAll("tr").forEach((row, idx) => {
+      const tds = row.querySelectorAll("td");
+      const playerNum = idx + 1;
+      const role = tds[1].querySelector("select").value;
+      const nights = [...tds].slice(2).map(c => c.textContent);
+      data.push([playerNum, role, ...nights]);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, "Таблица");
+
+    const now = new Date();
+    const date = now.toISOString().split("T")[0];
+    const time = `${now.getHours()}-${now.getMinutes()}`;
+    XLSX.writeFile(wb, `mafia_${date}_${time}.xlsx`);
+  }
 
   window.addEventListener("DOMContentLoaded", () => {
     const saved = localStorage.getItem("mafia_table");
@@ -298,5 +325,6 @@
 
   document.getElementById("loadFile").addEventListener("change", importData);
 </script>
+
 </body>
 </html>
