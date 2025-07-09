@@ -2,8 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>Мафия — Таблица</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <title>mafia_akm2</title>
   <style>
     body { font-family: sans-serif; padding: 10px; background: white; }
     table { border-collapse: collapse; width: 100%; }
@@ -64,267 +63,235 @@
 
 <div id="selectedPlayer"></div>
 
+<!-- Подключаем библиотеку Excel -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 <script>
-  const playerCount = parseInt(new URLSearchParams(location.search).get("count")) || 10;
-  const nightCount = 9;
-  const headerRow = document.getElementById("headerRow");
-  const tableBody = document.getElementById("tableBody");
+const playerCount = parseInt(new URLSearchParams(location.search).get("count")) || 10;
+const nightCount = 9;
+const headerRow = document.getElementById("headerRow");
+const tableBody = document.getElementById("tableBody");
 
-  for (let n = 1; n <= nightCount; n++) {
-    const th = document.createElement("th");
-    th.textContent = `Ночь ${n}`;
-    headerRow.appendChild(th);
-  }
+for (let n = 1; n <= nightCount; n++) {
+  const th = document.createElement("th");
+  th.textContent = `Ночь ${n}`;
+  headerRow.appendChild(th);
+}
 
-  const roleOptions = ["", "П", "Л", "Х", "Хд", "В", "Ш", "М", "К", "С"];
+const roleOptions = ["", "П","Л","Х","Хд","В","Ш","М","К","С"];
 
-  function resetColorClasses(cell) {
-    cell.classList.remove("red", "green", "purple", "pink",
-      "gradient-pink-purple", "gradient-pink-green", "gradient-pink-red");
-  }
+function getCellClass(text) {
+  const t = text.toUpperCase();
+  if (t.includes("ХХХ")) return "red";
+  if (t.includes("П") && t.includes("Л")) return "gradient-pink-purple";
+  if (t.includes("П") && t.includes("В")) return "gradient-pink-green";
+  if (t.includes("П") && (t.includes("Х") || t.includes("М"))) return "gradient-pink-red";
+  if (t.includes("Л")) return "purple";
+  if (t.includes("В")) return "green";
+  if (t.includes("Х") || t.includes("М")) return "red";
+  if (t.includes("П")) return "pink";
+  return "";
+}
 
-  function getCellClass(text) {
-    const parts = text.toUpperCase().split("\\").map(p => p.trim());
-    const has = r => parts.includes(r);
+function updateRowColors(row) {
+  const cells = [...row.querySelectorAll(".cell")];
+  const numCell = row.querySelector("td");
+  numCell.classList.remove("num-red");
+  cells.forEach(c => c.classList.remove("red"));
 
-    const hasP = has("П");
-    const hasL = has("Л");
-    const hasV = has("В");
-    const hasX = has("Х");
-    const hasM = has("М");
-    const hasXXX = has("ХХХ");
+  for (let i = 0; i < cells.length; i++) {
+    const val = cells[i].textContent.toUpperCase();
 
-    if (hasXXX) return "red";
-    if (hasP && hasL) return "gradient-pink-purple";
-    if (hasP && hasV) return "gradient-pink-green";
-    if (hasP && (hasX || hasM)) return "gradient-pink-red";
-    if (hasL) return "purple";
-    if (hasV) return "green";
-    if (hasX || hasM) return "red";
-    if (hasP) return "pink";
-    return "";
-  }
-
-  function updateRowColors(row) {
-    const cells = [...row.querySelectorAll(".cell")];
-    const numCell = row.querySelector("td");
-    numCell.classList.remove("num-red");
-    cells.forEach(c => c.classList.remove("red"));
-
-    for (let i = 0; i < cells.length; i++) {
-      const val = cells[i].textContent.toUpperCase();
-      const parts = val.split("\\").map(p => p.trim());
-      const hasKill = parts.includes("Х") || parts.includes("М");
-      const hasCancel = parts.includes("Л") || parts.includes("В");
-      const hasXXX = parts.includes("ХХХ");
-
-      if (hasXXX) {
-        numCell.classList.add("num-red");
-        resetColorClasses(cells[i]);
-        cells[i].classList.add("red");
-        return;
-      }
-
-      if (hasKill && !hasCancel) {
-        numCell.classList.add("num-red");
-        const style = getCellClass(val);
-        resetColorClasses(cells[i]);
-        if (style.startsWith("gradient-pink-")) {
-          cells[i].classList.add(style);
-        } else {
-          cells[i].classList.add("red");
-        }
-        return;
-      }
-    }
-  }
-
-  function createTable(count) {
-    tableBody.innerHTML = "";
-    for (let i = 1; i <= count; i++) {
-      const row = document.createElement("tr");
-
-      const numCell = document.createElement("td");
-      numCell.className = "number-cell";
-      numCell.textContent = i;
-      numCell.onclick = () => {
-        document.getElementById("selectedPlayer").textContent = i;
-      };
-      row.appendChild(numCell);
-
-      const roleCell = document.createElement("td");
-      const select = document.createElement("select");
-      roleOptions.forEach(opt => {
-        const o = document.createElement("option");
-        o.value = opt;
-        o.textContent = opt;
-        select.appendChild(o);
-      });
-      roleCell.appendChild(select);
-      row.appendChild(roleCell);
-
-      for (let n = 1; n <= nightCount; n++) {
-        const cell = document.createElement("td");
-        cell.className = "cell";
-        row.appendChild(cell);
-      }
-
-      tableBody.appendChild(row);
-    }
-  }
-
-  createTable(playerCount);
-
-  document.addEventListener("click", e => {
-    if (e.target.classList.contains("cell")) {
-      const cell = e.target;
-      const row = cell.parentElement;
-      let input = prompt("Х, М, В, Л, П, Ш, К, С, ХХХ. Удалить — 0. Удалить последнее — 00");
-      if (input === null) return;
-      input = input.toUpperCase().trim();
-
-      if (input === "0") {
-        cell.textContent = "";
-      } else if (input === "00") {
-        const parts = cell.textContent.split("\\");
-        parts.pop();
-        cell.textContent = parts.join("\\");
-      } else if (/^(Х|М|В|Л|П|Ш|К|С|ХХХ)$/.test(input)) {
-        cell.textContent = cell.textContent ? cell.textContent + "\\" + input : input;
-      }
-
-      resetColorClasses(cell);
-      cell.className = "cell";
-      const style = getCellClass(cell.textContent);
-      if (style) cell.classList.add(style);
-
-      updateRowColors(row);
-    }
-  });
-
-  async function exportData() {
-    const data = { count: playerCount, rows: [] };
-    tableBody.querySelectorAll("tr").forEach(row => {
-      const tds = row.querySelectorAll("td");
-      const role = tds[1].querySelector("select").value;
-      const nights = [...tds].slice(2).map(c => c.textContent);
-      data.rows.push({ role, nights });
-    });
-
-    const json = JSON.stringify(data, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-
-    if (window.showSaveFilePicker) {
-      try {
-        const now = new Date();
-        const date = now.toISOString().split("T")[0];
-        const time = `${now.getHours()}-${now.getMinutes()}`;
-        const fileHandle = await window.showSaveFilePicker({
-          suggestedName: `mafia_${date}_${time}.json`,
-          types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }]
-        });
-        const writable = await fileHandle.createWritable();
-        await writable.write(blob);
-        await writable.close();
-        alert("Файл сохранён успешно ✅");
-        return;
-      } catch (err) {
-        if (err.name !== "AbortError") {
-          alert("Не удалось сохранить: " + err.message);
-        }
-      }
+    if (val.includes("ХХХ")) {
+      numCell.classList.add("num-red");
+      cells[i].classList.add("red");
+      return;
     }
 
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `mafia_data.json`;
-    link.click();
-  }
+    const hasKill = val.includes("Х") || val.includes("М");
+    const hasCancel = val.includes("Л") || val.includes("В");
 
-  function importData(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = evt => {
-      const data = JSON.parse(evt.target.result);
-      createTable(data.count);
-      data.rows.forEach((r, i) => {
-        const row = tableBody.children[i];
-        row.querySelector("select").value = r.role;
-        const cells = [...row.querySelectorAll(".cell")];
-        r.nights.forEach((val, j) => {
-          const c = cells[j];
-          c.textContent = val;
-          resetColorClasses(c);
-          c.className = "cell";
-          const style = getCellClass(val);
-          if (style) c.classList.add(style);
-        });
-        updateRowColors(row);
-      });
+    if (hasKill && !hasCancel) {
+      numCell.classList.add("num-red");
+      cells[i].classList.add("red");
+      return;
+    }
+  }
+}
+
+function createTable(count) {
+  tableBody.innerHTML = "";
+  for (let i = 1; i <= count; i++) {
+    const row = document.createElement("tr");
+
+    const numCell = document.createElement("td");
+    numCell.className = "number-cell";
+    numCell.textContent = i;
+    numCell.onclick = () => {
+      document.getElementById("selectedPlayer").textContent = i;
     };
-    reader.readAsText(file);
-    e.target.value = "";
-  }
+    row.appendChild(numCell);
 
-  function resetTable() {
-    if (confirm("Очистить всю таблицу?")) {
-      localStorage.removeItem("mafia_table");
-      createTable(playerCount);
-    }
-  }
-
-  function exportToExcel() {
-    const wb = XLSX.utils.book_new();
-    const data = [];
-
-    const header = ["#", "Роль"];
-    for (let i = 1; i <= nightCount; i++) {
-      header.push(`Ночь ${i}`);
-    }
-    data.push(header);
-
-    tableBody.querySelectorAll("tr").forEach((row, idx) => {
-      const tds = row.querySelectorAll("td");
-      const playerNum = idx + 1;
-      const role = tds[1].querySelector("select").value;
-      const nights = [...tds].slice(2).map(c => c.textContent);
-      data.push([playerNum, role, ...nights]);
+    const roleCell = document.createElement("td");
+    const select = document.createElement("select");
+    roleOptions.forEach(opt => {
+      const o = document.createElement("option");
+      o.value = opt;
+      o.textContent = opt;
+      select.appendChild(o);
     });
+    roleCell.appendChild(select);
+    row.appendChild(roleCell);
 
-    const ws = XLSX.utils.aoa_to_sheet(data);
-    XLSX.utils.book_append_sheet(wb, ws, "Таблица");
-
-    const now = new Date();
-    const date = now.toISOString().split("T")[0];
-    const time = `${now.getHours()}-${now.getMinutes()}`;
-    XLSX.writeFile(wb, `mafia_${date}_${time}.xlsx`);
-  }
-
-  window.addEventListener("DOMContentLoaded", () => {
-    const saved = localStorage.getItem("mafia_table");
-    if (saved) {
-      const data = JSON.parse(saved);
-      createTable(data.count);
-      data.rows.forEach((r, i) => {
-        const row = tableBody.children[i];
-        row.querySelector("select").value = r.role;
-        const cells = [...row.querySelectorAll(".cell")];
-        r.nights.forEach((val, j) => {
-          const c = cells[j];
-          c.textContent = val;
-          resetColorClasses(c);
-          c.className = "cell";
-          const style = getCellClass(val);
-          if (style) c.classList.add(style);
-        });
-        updateRowColors(row);
-      });
+    for (let n = 1; n <= nightCount; n++) {
+      const cell = document.createElement("td");
+      cell.className = "cell";
+      row.appendChild(cell);
     }
+
+    tableBody.appendChild(row);
+  }
+}
+
+createTable(playerCount);
+
+document.addEventListener("click", e => {
+  if (e.target.classList.contains("cell")) {
+    const cell = e.target;
+    const row = cell.parentElement;
+    let input = prompt("Х, М, В, Л, П, Ш, К, С, ХХХ. Удалить — 0. Удалить последнее — 00");
+    if (input === null) return;
+    input = input.toUpperCase().trim();
+
+    if (input === "0") {
+      cell.textContent = "";
+    } else if (input === "00") {
+      const parts = cell.textContent.split("\\");
+      parts.pop();
+      cell.textContent = parts.join("\\");
+    } else if (/^(Х|М|В|Л|П|Ш|К|С|ХХХ)$/.test(input)) {
+      cell.textContent = cell.textContent ? cell.textContent + "\\" + input : input;
+    }
+
+    cell.className = "cell";
+    const style = getCellClass(cell.textContent);
+    if (style) cell.classList.add(style);
+    updateRowColors(row);
+  }
+});
+
+function exportData() {
+  const data = { count: playerCount, rows: [] };
+  tableBody.querySelectorAll("tr").forEach(row => {
+    const tds = row.querySelectorAll("td");
+    const role = tds[1].querySelector("select").value;
+    const nights = [...tds].slice(2).map(c => c.textContent);
+    data.rows.push({ role, nights });
   });
 
-  document.getElementById("loadFile").addEventListener("change", importData);
-</script>
+  const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+  const now = new Date();
+  const date = now.toISOString().split("T")[0];
+  const time = `${now.getHours()}-${now.getMinutes()}`;
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `mafia_${date}_${time}.json`;
+  link.click();
 
+  localStorage.setItem("mafia_table", JSON.stringify(data));
+}
+
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = evt => {
+    const data = JSON.parse(evt.target.result);
+    createTable(data.count);
+    data.rows.forEach((r, i) => {
+      const row = tableBody.children[i];
+      row.querySelector("select").value = r.role;
+      const cells = [...row.querySelectorAll(".cell")];
+      r.nights.forEach((val, j) => {
+        const c = cells[j];
+        c.textContent = val;
+        c.className = "cell";
+        const style = getCellClass(val);
+        if (style) c.classList.add(style);
+      });
+      updateRowColors(row);
+    });
+  };
+  reader.readAsText(file);
+  e.target.value = "";
+}
+
+function resetTable() {
+  if (confirm("Очистить всю таблицу?")) {
+    localStorage.removeItem("mafia_table");
+    createTable(playerCount);
+  }
+}
+
+function exportToExcel() {
+  const wb = XLSX.utils.book_new();
+  const data = [];
+
+  const header = ["#", "Роль"];
+  for (let i = 1; i <= nightCount; i++) {
+    header.push(`Ночь ${i}`);
+  }
+  data.push(header);
+
+  tableBody.querySelectorAll("tr").forEach((row, idx) => {
+    const tds = row.querySelectorAll("td");
+    const playerNum = idx + 1;
+    const role = tds[1].querySelector("select").value;
+    const nights = [...tds].slice(2).map(c => c.textContent);
+    data.push([playerNum, role, ...nights]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  XLSX.utils.book_append_sheet(wb, ws, "Таблица");
+
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([wbout], { type: 'application/octet-stream' });
+
+  const now = new Date();
+  const date = now.toISOString().split("T")[0];
+  const time = `${now.getHours()}-${now.getMinutes()}`;
+  const fileName = `mafia_${date}_${time}.xlsx`;
+
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+window.addEventListener("beforeunload", exportData);
+document.getElementById("loadFile").addEventListener("change", importData);
+window.addEventListener("DOMContentLoaded", () => {
+  const saved = localStorage.getItem("mafia_table");
+  if (saved) {
+    const data = JSON.parse(saved);
+    createTable(data.count);
+    data.rows.forEach((r, i) => {
+      const row = tableBody.children[i];
+      row.querySelector("select").value = r.role;
+      const cells = [...row.querySelectorAll(".cell")];
+      r.nights.forEach((val, j) => {
+        const c = cells[j];
+        c.textContent = val;
+        c.className = "cell";
+        const style = getCellClass(val);
+        if (style) c.classList.add(style);
+      });
+      updateRowColors(row);
+    });
+  }
+});
+</script>
 </body>
 </html>
